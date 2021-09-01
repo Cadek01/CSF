@@ -10,6 +10,8 @@ static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // TODO: implement
+  Fixedpoint fixedpoint = {whole, 0};
+  return fixedpoint;
   assert(0);
   return DUMMY;
 }

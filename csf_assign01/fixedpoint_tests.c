@@ -68,11 +68,11 @@ TestObjs *setup(void) {
   TestObjs *objs = malloc(sizeof(TestObjs));
 
   objs->zero = fixedpoint_create(0UL);
-  objs->one = fixedpoint_create(1UL);
+  /* objs->one = fixedpoint_create(1UL);
   objs->one_half = fixedpoint_create2(0UL, 0x8000000000000000UL);
   objs->one_fourth = fixedpoint_create2(0UL, 0x4000000000000000UL);
   objs->large1 = fixedpoint_create2(0x4b19efceaUL, 0xec9a1e2418UL);
-  objs->large2 = fixedpoint_create2(0xfcbf3d5UL, 0x4d1a23c24fafUL);
+  objs->large2 = fixedpoint_create2(0xfcbf3d5UL, 0x4d1a23c24fafUL); */
 
   return objs;
 }
