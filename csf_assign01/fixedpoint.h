@@ -250,4 +250,11 @@ int fixedpoint_is_valid(Fixedpoint val);
 //   of the Fixedpoint value
 char *fixedpoint_format_as_hex(Fixedpoint val);
 
+// add description
+uint64_t hex_to_dec_whole(char *hex, int len);
+
+// add description
+uint64_t hex_to_dec_frac(char *hex, int len);
+
+
 #endif // FIXEDPREC_H
