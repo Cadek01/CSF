@@ -52,9 +52,36 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-  // TODO: implement
-  assert(0);
-  return DUMMY;
+  // get sum of left and right as an int
+  int sumAsInt = fixedpoint_to_int(left) + fixedpoint_to_int(right);
+  // get the highest number of decimal places contained in either left or right
+  int lengthLeftFrac = std::to_string(left.frac).length();
+  int lengthRightFrac = std::to_string(right.frac).length();
+  int digitsInFrac = (lengthLeftFrac >= lengthRightFrac) ?
+	  lengthLeftFrac : lengthRightFrac;
+  // get whole and frac 
+  // (whole = digits to right of 10^digitsInFrac place, frac = other digits)
+  uint64_t whole = sumAsInt / get_powerOf10(digitsInFrac);
+  uint64_t frac = sumAsInt % whole;
+  // make Fixedpoint, return it
+  return fixedpoint_create2(whole, frac);
+}
+
+int fixedpoint_to_int(Fixedpoint fixedpoint) { 
+  // get length of frac
+  int lengthOfFrac = length(fixedpoint.frac);
+  // exponentiate 10 by lengthOfFrac
+  int powerOf10 = getPowerOf10(lengthOfFrac)
+  // finish the conversion, whole * powerOf10 + frac
+  return ((fixedpoint.whole * powerOf10) + fixedpoint.frac);
+}
+
+int get_powerOf10(int exponent) {
+  int powerOf10 = 1;
+  for (int i = 0; i < exponent; i++) {
+     powerOf10 = powerOf10 * 10;
+  }
+  return powerOf10;
 }
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {

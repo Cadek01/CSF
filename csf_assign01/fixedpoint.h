@@ -256,5 +256,13 @@ uint64_t hex_to_dec_whole(char *hex, int len);
 // add description
 uint64_t hex_to_dec_frac(char *hex, int len);
 
+// helper functions for fixedopint_add:
+
+// add description
+int fixedpoint_to_int(Fixedpoint fixedpoint);
+
+// add description
+int get_powerOf10(int exponent);
+
 
 #endif // FIXEDPREC_H
