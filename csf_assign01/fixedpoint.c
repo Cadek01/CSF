@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "fixedpoint.h"
+#include <math.h>
 
 #include <string.h>
 
@@ -52,6 +53,7 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
+  /*
   // get sum of left and right as an int
   int sumAsInt = fixedpoint_to_int(left) + fixedpoint_to_int(right);
   // get the highest number of decimal places contained in either left or right
@@ -64,16 +66,24 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   uint64_t whole = sumAsInt / get_powerOf10(digitsInFrac);
   uint64_t frac = sumAsInt % whole;
   // make Fixedpoint, return it
-  return fixedpoint_create2(whole, frac);
+  return fixedpoint_create2(whole, frac); */
+  // TODO: implement
+  assert(0);
+  return DUMMY;
 }
 
 int fixedpoint_to_int(Fixedpoint fixedpoint) { 
+  /* 
   // get length of frac
   int lengthOfFrac = length(fixedpoint.frac);
   // exponentiate 10 by lengthOfFrac
   int powerOf10 = getPowerOf10(lengthOfFrac)
   // finish the conversion, whole * powerOf10 + frac
-  return ((fixedpoint.whole * powerOf10) + fixedpoint.frac);
+  return ((fixedpoint.whole * powerOf10) + fixedpoint.frac); */
+
+  // TODO: implement
+  assert(0);
+  return 0;
 }
 
 int get_powerOf10(int exponent) {
@@ -204,6 +214,43 @@ uint64_t hex_to_dec_whole(char *hex, int len) {
 }
 
 uint64_t hex_to_dec_frac(char *hex, int len) {
+  uint64_t frac = 0;
+  int i = 15;
+  for (int j = 0; j < len; ++j) {
+    /* if (j > len) {
+      frac += (1 << (4 * i)) * (0);
+    } */
+    // else if (*hex >= '0' && *hex <= '9') frac += (1 << (4 * i)) * (*hex - '0');
+    if (*hex >= '0' && *hex <= '9') frac += pow(16, i) * (*hex - '0');
+
+    else if (*hex >= 'a' && *hex <= 'f') {
+      switch (*hex) {
+        case 'a':
+          frac += (1 << (4 * i)) * 10;
+          break;
+        case 'b':
+          frac += (1 << (4 * i)) * 11;
+          break;
+        case 'c':
+          frac += (1 << (4 * i)) * 12;
+          break;
+        case 'd':
+          frac += (1 << (4 * i)) * 13;
+          break;
+        case 'e':
+          frac += (1 << (4 * i)) * 14;
+          break;
+        case 'f':
+          // frac += (1 << (4 * i)) * 15;
+          frac += pow(16, i) * 15;
+          break;
+      }
+    }
+    ++hex;
+    --i;
+  }
+
+  return frac;
    // TODO: implement
   assert(0);
   return 0;
