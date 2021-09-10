@@ -93,6 +93,48 @@ uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend
 }
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
+
+  /* / base case: assume that left.whole > right.whole
+// integer substraction of the wholes:
+uint64_t difference_whole = left.whole - right.whole;
+// integer subtraction of the fracs
+uint64_t difference_frac;
+// base case: left.frac > right.frac
+if (left.frac > right.frac) {
+	difference_frac = left.frac - right.frac;
+}
+if (right.frac > left.frac) {
+	difference_frac = right.frac - left.frac;
+	difference_whole--;
+}
+else ( difference_frac = 0 } */
+
+  uint64_t whole_diff = 0, frac_diff = 0;
+  int neg = 0;
+
+  if ((left.whole == right.whole) && (left.frac == right.frac)) return fixedpoint_create(0);
+
+  if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
+    neg++;
+    Fixedpoint temp = right;
+    right = left;
+    left = temp;
+  }
+
+  whole_diff = left.whole - right.whole;
+
+  if (right.frac > left.frac) {
+    frac_diff = right.frac - left.frac;
+    whole_diff--;
+  }
+
+  else frac_diff = left.frac - right.frac;
+
+  Fixedpoint diff = fixedpoint_create2(whole_diff, frac_diff);
+  diff.negate;
+
+  return diff;
+
   // TODO: implement
   assert(0);
   return DUMMY;
@@ -103,9 +145,6 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
   
   val.neg = val.neg ? 0 : 1;
   return val;
-  // TODO: implement
-  // assert(0);
-  // return DUMMY;
 }
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
