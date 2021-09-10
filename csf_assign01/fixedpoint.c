@@ -107,6 +107,8 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
+  if (fixedpoint_is_zero(val)) return val;
+  
   val.neg = val.neg ? 0 : 1;
   return val;
   // TODO: implement
@@ -143,6 +145,7 @@ int fixedpoint_is_err(Fixedpoint val) {
 }
 
 int fixedpoint_is_neg(Fixedpoint val) {
+  return val.neg;
   // TODO: implement
   assert(0);
   return 0;
