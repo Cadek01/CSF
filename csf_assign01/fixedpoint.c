@@ -55,45 +55,38 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-  /*
-  // get sum of left and right as an int
-  int sumAsInt = fixedpoint_to_int(left) + fixedpoint_to_int(right);
-  // get the highest number of decimal places contained in either left or right
-  int lengthLeftFrac = std::to_string(left.frac).length();
-  int lengthRightFrac = std::to_string(right.frac).length();
-  int digitsInFrac = (lengthLeftFrac >= lengthRightFrac) ?
-	  lengthLeftFrac : lengthRightFrac;
-  // get whole and frac 
-  // (whole = digits to right of 10^digitsInFrac place, frac = other digits)
-  uint64_t whole = sumAsInt / get_powerOf10(digitsInFrac);
-  uint64_t frac = sumAsInt % whole;
-  // make Fixedpoint, return it
-  return fixedpoint_create2(whole, frac); */
-  // TODO: implement
-  assert(0);
-  return DUMMY;
-}
+  // start with frac:
+  // create pointer to track any carry-over needed
+  uint64_t carry_over = 0;
+  uint64_t* carry_over_ptr = &carry_over;
+  // get frac_sum, modified cary_over pointer
+  uint64_t frac_sum = bitwise_sum(carry_over_ptr, left.frac, right.frac);
+  // move on to whole:
+  // whole_sum = carry_over + left.whole + right.whole
+  uint64_t whole_sum = carry_over + left.whole + right.whole;
+  // return overall fixedpoint
+  return fixedpoint_create2(whole_sum, frac_sum);
+}   
 
-int fixedpoint_to_int(Fixedpoint fixedpoint) { 
-  /* 
-  // get length of frac
-  int lengthOfFrac = length(fixedpoint.frac);
-  // exponentiate 10 by lengthOfFrac
-  int powerOf10 = getPowerOf10(lengthOfFrac)
-  // finish the conversion, whole * powerOf10 + frac
-  return ((fixedpoint.whole * powerOf10) + fixedpoint.frac); */
-
-  // TODO: implement
-  assert(0);
-  return 0;
-}
-
-int get_powerOf10(int exponent) {
-  int powerOf10 = 1;
-  for (int i = 0; i < exponent; i++) {
-     powerOf10 = powerOf10 * 10;
-  }
-  return powerOf10;
+uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2) {
+        // do bitwise sum
+        uint64_t local_carry_over = 0;
+        uint64_t local_sum = 0;
+        while (addend2 != 0) {
+                // if 64th bit of both addend 1 & addend2 are a 1, need to carry over into whole
+                // change state of carry_over_ptr to reflect this intention, change 64th bith of both addends to be 0
+                if ((addend1 & (1 << 63)) && (addend2 & (1 << 63))) {
+                        *carry_over_ptr = 1;
+                        addend1 = addend1 ^ (1 << 63);
+                        addend2 = addend2 ^ (1 << 63);
+                }
+                local_carry_over = (addend1 & addend2) << 1;
+                local_sum = addend1 ^ addend2;
+                addend1 = local_sum;
+                addend2 = local_carry_over;
+        }
+        // return sum, which is stored in addend1
+        return addend1;
 }
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {

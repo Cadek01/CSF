@@ -255,13 +255,7 @@ char *fixedpoint_format_as_hex(Fixedpoint val);
 uint64_t hex_to_dec(const char *hex, int len, int is_whole);
 
 
-// helper functions for fixedopint_add:
-
 // add description
-int fixedpoint_to_int(Fixedpoint fixedpoint);
-
-// add description
-int get_powerOf10(int exponent);
-
+uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2);
 
 #endif // FIXEDPREC_H
