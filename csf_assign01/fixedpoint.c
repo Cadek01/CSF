@@ -7,6 +7,9 @@
 
 #include <string.h>
 
+// I DONT THINK WE ARE ALLOWED TO USE STRING.H
+// We should either ask on piazza or get length another way
+
 // You can remove this once all of the functions are fully implemented
 static Fixedpoint DUMMY;
 
@@ -75,7 +78,7 @@ uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend
         while (addend2 != 0) {
                 // if 64th bit of both addend 1 & addend2 are a 1, need to carry over into whole
                 // change state of carry_over_ptr to reflect this intention, change 64th bith of both addends to be 0
-                if ((addend1 & (1 << 63)) && (addend2 & (1 << 63))) {
+                if (((addend1 >> 63) & 1 ) && ((addend2 >> 63) & 1)) {
                         *carry_over_ptr = 1;
                         addend1 = addend1 ^ (1 << 63);
                         addend2 = addend2 ^ (1 << 63);
