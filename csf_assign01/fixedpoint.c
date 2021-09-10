@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include <assert.h>
 #include "fixedpoint.h"
-#include <math.h>
 
 #include <string.h>
 
@@ -12,33 +11,40 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  Fixedpoint fixedpoint = {whole, 0};
+  Fixedpoint fixedpoint = {whole, 0, 0, 1};
   return fixedpoint;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  Fixedpoint fixedpoint = {whole, frac};
+  Fixedpoint fixedpoint = {whole, frac, 0, 1};
   return fixedpoint;  
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   // TODO: implement
-  uint64_t whole = 0;
-  uint64_t frac = 0;
+  uint64_t whole = 0, frac = 0;
+  int neg = 0;
   int len_hex = strlen(hex);
+
+  if (*hex == '-') {
+    neg = 1;
+    ++hex;
+  }
 
   for (int i = 0; i < len_hex; i++) {
     if (hex[i] == '.') {
-      whole = hex_to_dec_whole(hex + i - 1, i);
+      whole = hex_to_dec(hex + i - 1, i, 1);
+      frac = hex_to_dec(hex + i + 1, len_hex - i - 1, 0);
 
-      // hex_to_dec_frac not yet implemented
-      frac = hex_to_dec_frac(hex + i + 1, len_hex - i - 1);
-
-      return fixedpoint_create2(whole, frac);
+      Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
+      fixedpoint.neg = neg;
+      return fixedpoint;
     }
   }
 
-  return fixedpoint_create(hex_to_dec_whole(hex, len_hex));
+  Fixedpoint fixedpoint = fixedpoint_create(hex_to_dec(hex, len_hex, 1));
+  fixedpoint.neg = neg;
+  return fixedpoint;
 
   // assert(0);
   // return DUMMY;
@@ -101,9 +107,11 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
+  val.neg = val.neg ? 0 : 1;
+  return val;
   // TODO: implement
-  assert(0);
-  return DUMMY;
+  // assert(0);
+  // return DUMMY;
 }
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
@@ -178,79 +186,44 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
   return s;
 }
 
-uint64_t hex_to_dec_whole(char *hex, int len) {
-  uint64_t whole = 0;
-  int i = 0;
-  for (int j = 0; j < len; ++j) {
-    if (*hex >= '0' && *hex <= '9') whole += (1 << (4 * i)) * (*hex - '0');
-
-    else if (*hex >= 'a' && *hex <= 'f') {
-      switch (*hex) {
-        case 'a':
-          whole += (1 << (4 * i)) * 10;
-          break;
-        case 'b':
-          whole += (1 << (4 * i)) * 11;
-          break;
-        case 'c':
-          whole += (1 << (4 * i)) * 12;
-          break;
-        case 'd':
-          whole += (1 << (4 * i)) * 13;
-          break;
-        case 'e':
-          whole += (1 << (4 * i)) * 14;
-          break;
-        case 'f':
-          whole += (1 << (4 * i)) * 15;
-          break;
-      }
-    }
-    --hex;
-    ++i;
-  }
-
-  return whole;
-}
-
-uint64_t hex_to_dec_frac(char *hex, int len) {
-  uint64_t frac = 0;
-  int i = 15;
+uint64_t hex_to_dec(const char *hex, int len, int is_whole) {
+  uint64_t val = 0;
+  int i = is_whole ? 0 : 15;
   for (int j = 0; j < len; ++j) {
     /* if (j > len) {
       frac += (1 << (4 * i)) * (0);
     } */
-    // else if (*hex >= '0' && *hex <= '9') frac += (1 << (4 * i)) * (*hex - '0');
-    if (*hex >= '0' && *hex <= '9') frac += pow(16, i) * (*hex - '0');
+    if (*hex >= '0' && *hex <= '9') val += ((uint64_t) 1 << (4 * i)) * (*hex - '0');
+    // if (*hex >= '0' && *hex <= '9') frac += pow(16, i) * (*hex - '0');
 
     else if (*hex >= 'a' && *hex <= 'f') {
       switch (*hex) {
         case 'a':
-          frac += (1 << (4 * i)) * 10;
+          val += ((uint64_t) 1 << (4 * i)) * 10;
           break;
         case 'b':
-          frac += (1 << (4 * i)) * 11;
+          val += ((uint64_t) 1 << (4 * i)) * 11;
           break;
         case 'c':
-          frac += (1 << (4 * i)) * 12;
+          val += ((uint64_t) 1 << (4 * i)) * 12;
           break;
         case 'd':
-          frac += (1 << (4 * i)) * 13;
+          val += ((uint64_t) 1 << (4 * i)) * 13;
           break;
         case 'e':
-          frac += (1 << (4 * i)) * 14;
+          val += ((uint64_t) 1 << (4 * i)) * 14;
           break;
         case 'f':
-          // frac += (1 << (4 * i)) * 15;
-          frac += pow(16, i) * 15;
+          val += ((uint64_t) 1 << (4 * i)) * 15;
+          // frac += pow(16, i) * 15;
           break;
       }
     }
-    ++hex;
-    --i;
+    if (is_whole) { --hex; ++i; }
+    else { ++hex; --i; }
   }
 
-  return frac;
+  return val;
    // TODO: implement
   assert(0);
   return 0;

@@ -6,6 +6,7 @@
 typedef struct {
   // TODO: add fields
   uint64_t whole, frac;
+  int neg, valid;
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
@@ -251,10 +252,8 @@ int fixedpoint_is_valid(Fixedpoint val);
 char *fixedpoint_format_as_hex(Fixedpoint val);
 
 // add description
-uint64_t hex_to_dec_whole(char *hex, int len);
+uint64_t hex_to_dec(const char *hex, int len, int is_whole);
 
-// add description
-uint64_t hex_to_dec_frac(char *hex, int len);
 
 // helper functions for fixedopint_add:
 
