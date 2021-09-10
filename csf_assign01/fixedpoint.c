@@ -21,7 +21,6 @@ Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
-  // TODO: implement
   uint64_t whole = 0, frac = 0;
   int neg = 0;
   int len_hex = strlen(hex);
@@ -45,9 +44,6 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   Fixedpoint fixedpoint = fixedpoint_create(hex_to_dec(hex, len_hex, 1));
   fixedpoint.neg = neg;
   return fixedpoint;
-
-  // assert(0);
-  // return DUMMY;
 }
 
 uint64_t fixedpoint_whole_part(Fixedpoint val) {
@@ -193,41 +189,17 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole) {
   uint64_t val = 0;
   int i = is_whole ? 0 : 15;
   for (int j = 0; j < len; ++j) {
-    /* if (j > len) {
-      frac += (1 << (4 * i)) * (0);
-    } */
-    if (*hex >= '0' && *hex <= '9') val += ((uint64_t) 1 << (4 * i)) * (*hex - '0');
-    // if (*hex >= '0' && *hex <= '9') frac += pow(16, i) * (*hex - '0');
+    if (*hex >= '0' && *hex <= '9') {
+      val += ((uint64_t) 1 << (4 * i)) * (*hex - '0');
+    }
 
     else if (*hex >= 'a' && *hex <= 'f') {
-      switch (*hex) {
-        case 'a':
-          val += ((uint64_t) 1 << (4 * i)) * 10;
-          break;
-        case 'b':
-          val += ((uint64_t) 1 << (4 * i)) * 11;
-          break;
-        case 'c':
-          val += ((uint64_t) 1 << (4 * i)) * 12;
-          break;
-        case 'd':
-          val += ((uint64_t) 1 << (4 * i)) * 13;
-          break;
-        case 'e':
-          val += ((uint64_t) 1 << (4 * i)) * 14;
-          break;
-        case 'f':
-          val += ((uint64_t) 1 << (4 * i)) * 15;
-          // frac += pow(16, i) * 15;
-          break;
-      }
+      val += ((uint64_t) 1 << (4 * i)) * (*hex - 'a' + 10);
     }
+
     if (is_whole) { --hex; ++i; }
     else { ++hex; --i; }
   }
 
   return val;
-   // TODO: implement
-  assert(0);
-  return 0;
 }
