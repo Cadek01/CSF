@@ -79,10 +79,18 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   // get frac_sum, modified cary_over pointer
   uint64_t frac_sum = bitwise_sum(carry_over_ptr, left.frac, right.frac);
   // move on to whole:
-  uint64_t whole_sum = carry_over + left.whole + right.whole;
+  uint64_t whole_sum = carry_over + left.whole + right.whole; 
   // return overall fixedpoint
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
 
+  // WITH INT ADDITION - doesnt work
+  /* if ( ( (left.frac >> 63) & 1) && ( (right.frac >> 63) & 1) ) {
+    left.frac -= (uint64_t) 1 << 63;
+    right.frac -= (uint64_t) 1 << 63;
+    carry_over = 1;
+  }
+  Fixedpoint sum = fixedpoint_create2(left.whole + right.whole + carry_over, left.frac + right.frac);
+  */
   // OVERFLOW CHECK
   if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
     if ( (fixedpoint_compare(left, sum) != -1) || (fixedpoint_compare(right, sum) != -1)) {
@@ -242,6 +250,22 @@ int fixedpoint_is_valid(Fixedpoint val) {
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {
+  /* char* hex = malloc(35);
+  int i = 0;
+  if (fixedpoint_is_neg(val)) { 
+    hex[0] = '-';
+    i++;
+  }
+
+  int hex_int;
+  char hex_char;
+  hex_int = (val.whole >> (4 * 15)) & 15;
+
+  for (; i < )
+  if (hex_int > 9) hex_char = 'a' + hex_int - 10;
+  else hex_char = '0' + hex_int; */
+  
+
   // TODO: implement
   assert(0);
   char *s = malloc(20);

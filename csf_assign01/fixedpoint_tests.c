@@ -239,6 +239,12 @@ void test_is_overflow_pos(TestObjs *objs) {
 
   sum = fixedpoint_sub(objs->max, negative_one);
   ASSERT(fixedpoint_is_overflow_pos(sum));
+
+  // MY TEST
+  sum = fixedpoint_add(fixedpoint_negate(objs->max), negative_one);
+  // printf("\npos_over: %d, neg_over: %d\n", sum.pos_over, sum.neg_over);
+  ASSERT(fixedpoint_is_overflow_neg(sum));
+
 }
 
 void test_is_err(TestObjs *objs) {
