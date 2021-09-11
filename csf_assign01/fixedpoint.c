@@ -117,10 +117,10 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
     	return fixedpoint_negate( fixedpoint_add(left, right));
  	}
 
-  	int whole_carry = 0, frac_carry = 0, overflow = 0;
-  	int *carry_ptr = &whole_carry;
- 	  int *frac_carry_ptr = &frac_carry;
-  	int *overflow_ptr = &overflow;
+  	unsigned int whole_carry = 0, frac_carry = 0, overflow = 0;
+  	unsigned int *carry_ptr = &whole_carry;
+ 	  unsigned int *frac_carry_ptr = &frac_carry;
+  	unsigned int *overflow_ptr = &overflow;
 
   	uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
   	if (frac_carry) {
@@ -398,7 +398,7 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   return val;
 }
 
-uint64_t get_add_val(uint64_t val1, uint64_t val2, int* carry) {
+uint64_t get_add_val(uint64_t val1, uint64_t val2, unsigned int* carry) {
   uint64_t sum;
   uint64_t temp;
   if ((val1 >> 63) && (val2 >> 63)) {

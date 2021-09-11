@@ -258,7 +258,7 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err);
 void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole);
 
 // add description
-uint64_t get_add_val(uint64_t val1, uint64_t val2, int* carry);
+uint64_t get_add_val(uint64_t val1, uint64_t val2, unsigned int* carry);
 
 // add description
 uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2);
