@@ -6,7 +6,7 @@
 typedef struct {
   // TODO: add fields
   uint64_t whole, frac;
-  int valid, neg, pos_over, neg_over, pos_under, neg_under;
+  int valid, neg, err, pos_over, neg_over, pos_under, neg_under;
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
@@ -252,7 +252,7 @@ int fixedpoint_is_valid(Fixedpoint val);
 char *fixedpoint_format_as_hex(Fixedpoint val);
 
 // add description
-uint64_t hex_to_dec(const char *hex, int len, int is_whole);
+uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err);
 
 
 // add description

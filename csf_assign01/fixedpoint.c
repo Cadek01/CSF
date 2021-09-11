@@ -5,47 +5,45 @@
 #include <assert.h>
 #include "fixedpoint.h"
 
-#include <string.h>
-
-// I DONT THINK WE ARE ALLOWED TO USE STRING.H
-// We should either ask on piazza or get length another way
-
 // You can remove this once all of the functions are fully implemented
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  Fixedpoint fixedpoint = {whole, 0, 1, 0, 0, 0, 0, 0};
+  Fixedpoint fixedpoint = {whole, 0, 1, 0, 0, 0, 0, 0, 0};
   return fixedpoint;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  Fixedpoint fixedpoint = {whole, frac, 1, 0, 0, 0, 0, 0};
+  Fixedpoint fixedpoint = {whole, frac, 1, 0, 0, 0, 0, 0, 0};
   return fixedpoint;  
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   uint64_t whole = 0, frac = 0;
-  int neg = 0;
+  int neg = 0, err = 0, is_frac = 0;
+  int *err_ptr = &err;
   int len_hex = strlen(hex);
 
   if (*hex == '-') {
     neg = 1;
     ++hex;
+    --len_hex;
   }
 
   for (int i = 0; i < len_hex; i++) {
     if (hex[i] == '.') {
-      whole = hex_to_dec(hex + i - 1, i, 1);
-      frac = hex_to_dec(hex + i + 1, len_hex - i - 1, 0);
-
-      Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
-      fixedpoint.neg = neg;
-      return fixedpoint;
+      is_frac = 1;
+      whole = hex_to_dec(hex + i - 1, i, 1, err_ptr);
+      frac = hex_to_dec(hex + i + 1, len_hex - i - 1, 0, err_ptr);
     }
   }
 
-  Fixedpoint fixedpoint = fixedpoint_create(hex_to_dec(hex, len_hex, 1));
+  if (!is_frac) whole = hex_to_dec(hex, len_hex, 1, err_ptr);
+
+  Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
   fixedpoint.neg = neg;
+  fixedpoint.err = err;
+  fixedpoint.valid = !err;
   return fixedpoint;
 }
 
@@ -214,9 +212,7 @@ int fixedpoint_is_zero(Fixedpoint val) {
 }
 
 int fixedpoint_is_err(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  return val.err;
 }
 
 int fixedpoint_is_neg(Fixedpoint val) {
@@ -244,9 +240,7 @@ int fixedpoint_is_underflow_pos(Fixedpoint val) {
 }
 
 int fixedpoint_is_valid(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  return val.valid;
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {
@@ -257,9 +251,12 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
   return s;
 }
 
-uint64_t hex_to_dec(const char *hex, int len, int is_whole) {
+uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   uint64_t val = 0;
   int i = is_whole ? 0 : 15;
+
+  if (len > 16) *err = 1;
+
   for (int j = 0; j < len; ++j) {
     if (*hex >= '0' && *hex <= '9') {
       val += ((uint64_t) 1 << (4 * i)) * (*hex - '0');
@@ -268,6 +265,8 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole) {
     else if (*hex >= 'a' && *hex <= 'f') {
       val += ((uint64_t) 1 << (4 * i)) * (*hex - 'a' + 10);
     }
+
+    else *err = 1;
 
     if (is_whole) { --hex; ++i; }
     else { ++hex; --i; }
