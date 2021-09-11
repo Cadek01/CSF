@@ -409,8 +409,8 @@ uint64_t get_add_val(uint64_t val1, uint64_t val2, int* carry) {
   else if ((val1 >> 63) || (val2 >> 63)) {
     if (val2 >> 63) {
       temp = val1;
-      val2 = val1;
-      val1 = temp;
+      val1 = val2;
+      val2 = temp;
     }
     
     sum = (val1 ^ ((uint64_t) 1 << 63)) + val2;
