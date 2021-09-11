@@ -190,32 +190,39 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
-  int64_t halved_whole;
-  int64_t halved_frac;
+  uint64_t halved_whole = 0, halved_frac = 0;
+  int whole_is_odd = val.whole - ((val.whole >> 1) << 1);
+
   // complication #1 with base case: frac looses information when shifted over by 1 bit because already 64th bit had information in it
   // need to mark as underflow (pos if val is pos, neg is val is neg)
-  if (val.frac & 1) {
-	if (val.neg) {
-		val.neg_under = 1;
-	} 
-	else {
-		val.pos_under = 1;
-	}
+  // if (val.frac & 1) { I dont think you can do & like this
+  if ((val.frac) - (val.frac >> 1) << 1) {
+	  if (fixedpoint_is_neg(val)) val.neg_under = 1;
+	  else val.pos_under = 1;
+	  val.valid = 0;
   }
   // base case: whole can get halved, fraction can get halved indepedently of each other (no carrying over)
   halved_whole = val.whole >> 1;
+  halved_frac = val.frac >> 1;
+
   // complication #2 with base case: when whole get cut, 0.5 may need to be carried over to frac
-  if (val.whole & 1) {
-	  val.whole = val.whole ^ 1;
+  // if (val.whole & 1) { again this wont work
+  if (whole_is_odd) {
+	  /* val.whole = val.whole ^ 1;
 	  halved_frac = val.frac >> 1;
-	  halved_frac = val.frac ^ (1 << 63);
+	  halved_frac = val.frac ^ ((uint64_t) 1 << 63); */ // trying something else here
+
+    halved_frac += (uint64_t) 1 << 63;
   }
   // else, back to base case
-  else {
+  /* else {
 	  halved_frac = val.frac >> 1;
-  }
+  } */
   // return halved fixedpoint
-  return fixedpoint_create2(halved_whole, halved_frac);
+  Fixedpoint half = fixedpoint_create2(halved_whole, halved_frac);
+  half.neg_under = val.neg_under;
+  half.pos_under = val.pos_under;
+  return half;
 }
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
