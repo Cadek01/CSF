@@ -190,9 +190,32 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return DUMMY;
+  int64_t halved_whole;
+  int64_t halved_frac;
+  // complication #1 with base case: frac looses information when shifted over by 1 bit because already 64th bit had information in it
+  // need to mark as underflow (pos if val is pos, neg is val is neg)
+  if (val.frac & 1) {
+	if (val.neg) {
+		val.neg_under = 1;
+	} 
+	else {
+		val.pos_under = 1;
+	}
+  }
+  // base case: whole can get halved, fraction can get halved indepedently of each other (no carrying over)
+  halved_whole = val.whole >> 1;
+  // complication #2 with base case: when whole get cut, 0.5 may need to be carried over to frac
+  if (val.whole & 1) {
+	  val.whole = val.whole ^ 1;
+	  halved_frac = val.frac >> 1;
+	  halved_frac = val.frac ^ (1 << 63);
+  }
+  // else, back to base case
+  else {
+	  halved_frac = val.frac >> 1;
+  }
+  // return halved fixedpoint
+  return fixedpoint_create2(halved_whole, halved_frac);
 }
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
@@ -234,15 +257,11 @@ int fixedpoint_is_overflow_pos(Fixedpoint val) {
 }
 
 int fixedpoint_is_underflow_neg(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  return val.neg_under;
 }
 
 int fixedpoint_is_underflow_pos(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  return val.pos_under;
 }
 
 int fixedpoint_is_valid(Fixedpoint val) {
