@@ -250,27 +250,64 @@ int fixedpoint_is_valid(Fixedpoint val) {
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {
-  /* char* hex = malloc(35);
-  int i = 0;
+  char* hex = malloc(35);
+  unsigned int i = 0;
+  unsigned int *i_ptr = &i;
+
+  if (fixedpoint_is_zero(val)) {
+    hex[i] = '0';
+    hex[i + 1] = '\0';
+    return hex;
+  }
+
   if (fixedpoint_is_neg(val)) { 
-    hex[0] = '-';
+    hex[i] = '-';
+    i++;
+  }
+  
+  if (val.whole) dec_to_hex(val.whole, hex, i_ptr, 1);
+  else {
+    hex[i] = '0';
     i++;
   }
 
-  int hex_int;
-  char hex_char;
-  hex_int = (val.whole >> (4 * 15)) & 15;
+  if (val.frac) dec_to_hex(val.frac, hex, i_ptr, 0);
+  hex[i] = '\0';
 
-  for (; i < )
-  if (hex_int > 9) hex_char = 'a' + hex_int - 10;
-  else hex_char = '0' + hex_int; */
+  return hex;
   
-
   // TODO: implement
-  assert(0);
+  /* assert(0);
   char *s = malloc(20);
   strcpy(s, "<invalid>");
-  return s;
+  return s; */
+}
+
+void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole) {
+  int hex_int, non_zero = 0;
+  char hex_char;
+  uint64_t rem = val;
+
+  if (!whole) {
+    hex[*index] = '.';
+    (*index)++;
+  }
+
+  for (int j = 15; j >= 0; j--) {
+    if (rem == 0 && !whole) return;
+
+    hex_int = (rem >> (4 * j)) & 15;
+    rem -= (rem >> (4 * j)) << (4 * j);
+
+    if (!non_zero && hex_int) non_zero = 1;
+    if (hex_int > 9) hex_char = 'a' + hex_int - 10;
+    else hex_char = '0' + hex_int;
+
+    if (non_zero || !whole) {
+      hex[*index] = hex_char;
+      (*index)++;
+    }
+  }
 }
 
 uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
