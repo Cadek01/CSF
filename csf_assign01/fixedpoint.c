@@ -222,6 +222,7 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
   Fixedpoint half = fixedpoint_create2(halved_whole, halved_frac);
   half.neg_under = val.neg_under;
   half.pos_under = val.pos_under;
+  half.neg = val.neg;
   return half;
 }
 
