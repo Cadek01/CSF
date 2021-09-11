@@ -175,7 +175,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
     temp = fixedpoint_negate(right);
     right = fixedpoint_negate(left);
     left = temp;
-    neg = !neg;
+    return fixedpoint_negate(fixedpoint_sub(left, right));
   }
 
 
@@ -183,7 +183,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   if (!fixedpoint_compare(left, right)) return fixedpoint_create(0);
 
   if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
-    neg = !neg;
+    neg = 1;
     temp = right;
     right = left;
     left = temp;
