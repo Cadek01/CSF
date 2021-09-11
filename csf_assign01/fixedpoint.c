@@ -418,6 +418,7 @@ uint64_t get_add_val(uint64_t val1, uint64_t val2, int* carry) {
       sum = sum ^ ((uint64_t) 1 << 63);
       *carry = 1;
     }
+    else sum = val1 + val2;
   }
   else sum = val1 + val2;
 
