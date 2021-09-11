@@ -191,12 +191,14 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
   uint64_t halved_whole = 0, halved_frac = 0;
-  int whole_is_odd = val.whole - ((val.whole >> 1) << 1);
+  // int whole_is_odd = val.whole - ((val.whole >> 1) << 1);
+  int whole_is_odd = val.whole & 1;
 
   // complication #1 with base case: frac looses information when shifted over by 1 bit because already 64th bit had information in it
   // need to mark as underflow (pos if val is pos, neg is val is neg)
   // if (val.frac & 1) { I dont think you can do & like this
-  if ((val.frac) - (val.frac >> 1) << 1) {
+  // if ((val.frac) - (val.frac >> 1) << 1) {
+  if (val.frac & 1) {
 	  if (fixedpoint_is_neg(val)) val.neg_under = 1;
 	  else val.pos_under = 1;
 	  val.valid = 0;
