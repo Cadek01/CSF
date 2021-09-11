@@ -84,9 +84,13 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   uint64_t whole_sum = carry_over + left.whole + right.whole;
   // return overall fixedpoint
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  
 
   // OVERFLOW CHECK
+  if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
+    if ( (fixedpoint_compare(left, sum) != -1) || (fixedpoint_compare(right, sum) != -1)) {
+      sum.pos_over = 1;
+    }
+  }
   return sum;
 }   
 
@@ -217,21 +221,14 @@ int fixedpoint_is_err(Fixedpoint val) {
 
 int fixedpoint_is_neg(Fixedpoint val) {
   return val.neg;
-  // TODO: implement
-  assert(0);
-  return 0;
 }
 
 int fixedpoint_is_overflow_neg(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  return val.neg_over;
 }
 
 int fixedpoint_is_overflow_pos(Fixedpoint val) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  return val.pos_over;
 }
 
 int fixedpoint_is_underflow_neg(Fixedpoint val) {
