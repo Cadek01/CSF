@@ -14,12 +14,12 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  Fixedpoint fixedpoint = {whole, 0, 0, 1};
+  Fixedpoint fixedpoint = {whole, 0, 1, 0, 0, 0, 0, 0};
   return fixedpoint;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  Fixedpoint fixedpoint = {whole, frac, 0, 1};
+  Fixedpoint fixedpoint = {whole, frac, 1, 0, 0, 0, 0, 0};
   return fixedpoint;  
 }
 
@@ -81,10 +81,13 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   // get frac_sum, modified cary_over pointer
   uint64_t frac_sum = bitwise_sum(carry_over_ptr, left.frac, right.frac);
   // move on to whole:
-  // whole_sum = carry_over + left.whole + right.whole
   uint64_t whole_sum = carry_over + left.whole + right.whole;
   // return overall fixedpoint
-  return fixedpoint_create2(whole_sum, frac_sum);
+  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
+  
+
+  // OVERFLOW CHECK
+  return sum;
 }   
 
 uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2) {
@@ -96,8 +99,8 @@ uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend
                 // change state of carry_over_ptr to reflect this intention, change 64th bith of both addends to be 0
                 if (((addend1 >> 63) & 1 ) && ((addend2 >> 63) & 1)) {
                         *carry_over_ptr = 1;
-                        addend1 = addend1 ^ (1 << 63);
-                        addend2 = addend2 ^ (1 << 63);
+                        addend1 = addend1 ^ ((uint64_t) 1 << 63);
+                        addend2 = addend2 ^ ((uint64_t) 1 << 63);
                 }
                 local_carry_over = (addend1 & addend2) << 1;
                 local_sum = addend1 ^ addend2;
@@ -127,10 +130,12 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
     temp = fixedpoint_negate(right);
     right = fixedpoint_negate(left);
     left = temp;
-    neg = 1;
+    neg = !neg;
   }
 
-  if ((left.whole == right.whole) && (left.frac == right.frac)) return fixedpoint_create(0);
+
+  // CHANGE TO COMPARE
+  if (!fixedpoint_compare(left, right)) return fixedpoint_create(0);
 
   if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
     neg = !neg;
@@ -156,9 +161,21 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
+  int temp;
   if (fixedpoint_is_zero(val)) return val;
-  
   val.neg = val.neg ? 0 : 1;
+
+  if (val.pos_over || val.neg_over) {
+    temp = val.pos_over;
+    val.pos_over = val.neg_over;
+    val.neg_over = temp;
+  }
+
+  if (val.pos_under || val.neg_under) {
+    temp = val.pos_under;
+    val.pos_under = val.neg_under;
+    val.neg_under = temp;
+  }
   return val;
 }
 
@@ -175,9 +192,17 @@ Fixedpoint fixedpoint_double(Fixedpoint val) {
 }
 
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
-  // TODO: implement
-  assert(0);
-  return 0;
+  if ( (left.whole == right.whole) && (left.frac == right.frac) && (left.neg == right.neg)) return 0;
+
+  if (!left.neg) {
+    if (right.neg) return 1;
+    if ( (left.whole > right.whole) || ( (left.whole == right.whole) && (left.frac > right.frac) )) return 1;
+    return -1;
+  }
+
+  if (!right.neg) return -1;
+  if ( (left.whole < right.whole) || ( (left.whole == right.whole) && (left.frac < right.frac) )) return 1;
+  return -1;
 }
 
 int fixedpoint_is_zero(Fixedpoint val) {
