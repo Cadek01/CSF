@@ -91,7 +91,6 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   }
   Fixedpoint sum = fixedpoint_create2(left.whole + right.whole + carry_over, left.frac + right.frac);
   */
-  // OVERFLOW CHECK 
   /* if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
     if ( (fixedpoint_compare(left, sum) != -1) || (fixedpoint_compare(right, sum) != -1)) {
       sum.pos_over = 1;
@@ -133,7 +132,6 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 
   	return sum;
 }
-
 
 uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2) {
         // do bitwise sum
@@ -178,8 +176,6 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
     return fixedpoint_negate(fixedpoint_sub(left, right));
   }
 
-
-  // CHANGE TO COMPARE
   if (!fixedpoint_compare(left, right)) return fixedpoint_create(0);
 
   if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
@@ -193,6 +189,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   if (right.frac > left.frac) {
     frac_diff = right.frac - left.frac;
+    frac_diff = ((uint64_t) 1 << 63) - frac_diff;
     whole_diff--;
   }
 
@@ -226,13 +223,10 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
 
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
   uint64_t halved_whole = 0, halved_frac = 0;
-  // int whole_is_odd = val.whole - ((val.whole >> 1) << 1);
   int whole_is_odd = val.whole & 1;
 
   // complication #1 with base case: frac looses information when shifted over by 1 bit because already 64th bit had information in it
   // need to mark as underflow (pos if val is pos, neg is val is neg)
-  // if (val.frac & 1) { I dont think you can do & like this
-  // if ((val.frac) - (val.frac >> 1) << 1) {
   if (val.frac & 1) {
 	  if (fixedpoint_is_neg(val)) val.neg_under = 1;
 	  else val.pos_under = 1;
@@ -243,18 +237,9 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
   halved_frac = val.frac >> 1;
 
   // complication #2 with base case: when whole get cut, 0.5 may need to be carried over to frac
-  // if (val.whole & 1) { again this wont work
-  if (whole_is_odd) {
-	  /* val.whole = val.whole ^ 1;
-	  halved_frac = val.frac >> 1;
-	  halved_frac = val.frac ^ ((uint64_t) 1 << 63); */ // trying something else here
+  if (whole_is_odd) halved_frac += (uint64_t) 1 << 63;
 
-    halved_frac += (uint64_t) 1 << 63;
-  }
   // else, back to base case
-  /* else {
-	  halved_frac = val.frac >> 1;
-  } */
   // return halved fixedpoint
   Fixedpoint half = fixedpoint_create2(halved_whole, halved_frac);
   half.neg_under = val.neg_under;
