@@ -101,37 +101,37 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 }   */
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-  if (left.neg && !right.neg) {
-    left = fixedpoint_negate(left);
-    return fixedpoint_sub(right, left);
-  }
+  	if (left.neg && !right.neg) {
+    		left = fixedpoint_negate(left);
+    		return fixedpoint_sub(right, left);
+  	}
 
-  if (!left.neg && right.neg) {
-    right = fixedpoint_negate(right);
-    return fixedpoint_sub(left, right);
-  }
+  	if (!left.neg && right.neg) {
+    		right = fixedpoint_negate(right);
+    		return fixedpoint_sub(left, right);
+  	}
 
-  if (left.neg && right.neg) {
-    left = fixedpoint_negate(left);
-    right = fixedpoint_negate(right);
-    return fixedpoint_negate( fixedpoint_add(left, right));
-  }
+  	if (left.neg && right.neg) {
+    		left = fixedpoint_negate(left);
+    		right = fixedpoint_negate(right);
+    		return fixedpoint_negate( fixedpoint_add(left, right));
+ 	}
 
-  int whole_carry = 0, frac_carry = 0, overflow = 0;
-  int *carry_ptr = &whole_carry;
-  int *frac_carry_ptr = &frac_carry;
-  int *overflow_ptr = &overflow;
+  	int whole_carry = 0, frac_carry = 0, overflow = 0;
+  	int *carry_ptr = &whole_carry;
+ 	int *frac_carry_ptr = &frac_carry;
+  	int *overflow_ptr = &overflow;
 
-  uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
-  if (frac_carry) {
-    left.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
-  }
+  	uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
+  	if (frac_carry) {
+    		left.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
+  	}
 
-  uint64_t whole_sum = get_add_val(left.whole, right.whole, overflow_ptr);
-  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  sum.pos_over = overflow;
-  
-  return sum;
+  	uint64_t whole_sum = get_add_val(left.whole, right.whole, overflow_ptr);
+  	Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
+  	sum.pos_over = overflow;
+
+  	return sum;
 }
 
 
