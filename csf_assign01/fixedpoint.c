@@ -55,7 +55,7 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   return val.frac;
 }
 
-Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
+/* Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   if (left.neg && !right.neg) {
     left = fixedpoint_negate(left);
     return fixedpoint_sub(right, left);
@@ -91,14 +91,49 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   }
   Fixedpoint sum = fixedpoint_create2(left.whole + right.whole + carry_over, left.frac + right.frac);
   */
-  // OVERFLOW CHECK
-  if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
+  // OVERFLOW CHECK 
+  /* if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
     if ( (fixedpoint_compare(left, sum) != -1) || (fixedpoint_compare(right, sum) != -1)) {
       sum.pos_over = 1;
     }
   }
+  return sum; 
+}   */
+
+Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
+  if (left.neg && !right.neg) {
+    left = fixedpoint_negate(left);
+    return fixedpoint_sub(right, left);
+  }
+
+  if (!left.neg && right.neg) {
+    right = fixedpoint_negate(right);
+    return fixedpoint_sub(left, right);
+  }
+
+  if (left.neg && right.neg) {
+    left = fixedpoint_negate(left);
+    right = fixedpoint_negate(right);
+    return fixedpoint_negate( fixedpoint_add(left, right));
+  }
+
+  int whole_carry = 0, frac_carry = 0, overflow = 0;
+  int *carry_ptr = &whole_carry;
+  int *frac_carry_ptr = &frac_carry;
+  int *overflow_ptr = &overflow;
+
+  uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
+  if (frac_carry) {
+    left.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
+  }
+
+  uint64_t whole_sum = get_add_val(left.whole, right.whole, overflow_ptr);
+  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
+  sum.pos_over = overflow;
+  
   return sum;
-}   
+}
+
 
 uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2) {
         // do bitwise sum
@@ -361,4 +396,30 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   }
 
   return val;
+}
+
+uint64_t get_add_val(uint64_t val1, uint64_t val2, int* carry) {
+  uint64_t sum;
+  uint64_t temp;
+  if ((val1 >> 63) && (val2 >> 63)) {
+    *carry = 1;
+    sum = (val1 ^ ((uint64_t) 1 << 63)) + (val1 ^ ((uint64_t) 1 << 63));
+  }
+
+  else if ((val1 >> 63) || (val2 >> 63)) {
+    if (val2 >> 63) {
+      temp = val1;
+      val2 = val1;
+      val1 = temp;
+    }
+    
+    sum = (val1 ^ ((uint64_t) 1 << 63)) + val2;
+    if (sum >> 63) {
+      sum = sum ^ ((uint64_t) 1 << 63);
+      *carry = 1;
+    }
+  }
+  else sum = val1 + val2;
+
+  return sum;
 }
