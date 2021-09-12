@@ -237,9 +237,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   if (right.frac > left.frac) {
     frac_diff = right.frac - left.frac;
-    // frac_diff = (1UL << 63) - frac_diff;
-    frac_diff = (~0UL) - frac_diff;
-    frac_diff++;
+    frac_diff = (~0UL) - frac_diff + 1;
     whole_diff--;
   }
 
