@@ -103,42 +103,42 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   	
 	// -(left) + (right) = (right) - (left)
 	if (left.neg && !right.neg) {
-    		Fixedpoint left_copy = fixedpoint_negate(left);
-    		return fixedpoint_sub(right, left_copy);
-  	}
+    Fixedpoint left_copy = fixedpoint_negate(left);
+    return fixedpoint_sub(right, left_copy);
+  }
 
 	// (left) + -(right) = (left) - (right)
-  	if (!left.neg && right.neg) {
-    		Fixedpoint right_copy = fixedpoint_negate(right);
-    		return fixedpoint_sub(left, right_copy);
-  	}
+  if (!left.neg && right.neg) {
+    Fixedpoint right_copy = fixedpoint_negate(right);
+    return fixedpoint_sub(left, right_copy);
+  }
 
 	// -(left) + -(right) = -(left + right)
-  	if (left.neg && right.neg) {
-    		Fixedpoint left_copy = fixedpoint_negate(left);
-    		Fixedpoint right_copy = fixedpoint_negate(right);
-    	return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
+  if (left.neg && right.neg) {
+    Fixedpoint left_copy = fixedpoint_negate(left);
+    Fixedpoint right_copy = fixedpoint_negate(right);
+    return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
  	}
 
 	// initialize variables
-  	uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
+  uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
  	uint64_t *frac_carry_ptr = &frac_carry;
-  	uint64_t *overflow_ptr = &overflow;
+  uint64_t *overflow_ptr = &overflow;
 	Fixedpoint addend1 = left;
 	Fixedpoint addend2 = right;
 
 	// deal with frac first
-  	uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
-  	if (frac_carry) {
-    		addend1.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
-  	}
+  uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
+  if (frac_carry) {
+    addend1.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
+  }
 
 	// get whole next
-  	uint64_t whole_sum = get_add_val(addend1.whole, addend2.whole, overflow_ptr); 
-  	Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  	sum.pos_over = overflow;
+  uint64_t whole_sum = get_add_val(addend1.whole, addend2.whole, overflow_ptr); 
+  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
+  sum.pos_over = overflow;
 
-  	return sum;
+  return sum;
 }
 
 /*
