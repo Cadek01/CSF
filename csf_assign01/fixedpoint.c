@@ -120,7 +120,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
  	}
 
 	// initialize variables
-  uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
+  /* uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
  	uint64_t *frac_carry_ptr = &frac_carry;
   uint64_t *overflow_ptr = &overflow;
 	Fixedpoint addend1 = left;
@@ -135,8 +135,14 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 	// get whole next
   uint64_t whole_sum = get_add_val(addend1.whole, addend2.whole, overflow_ptr); 
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  sum.pos_over = overflow;
+  sum.pos_over = overflow; */
 
+  uint64_t frac_sum = left.frac + right.frac;
+  uint64_t whole_sum = left.whole + right.whole;
+  if (frac_sum < right.frac) whole_sum += 1UL;
+
+  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
+  if (whole_sum < right.whole) sum.pos_over = 1;
   return sum;
 }
 
