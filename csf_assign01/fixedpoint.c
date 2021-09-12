@@ -297,7 +297,22 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
 }
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
-  return fixedpoint_add(val, val);
+  // return fixedpoint_add(val, val);
+  uint64_t carry = 0, overflow = 0;
+  if (val.frac & (1UL << 63)) {
+    carry = 1UL;
+  }
+  if (val.whole & (1UL << 63)) {
+    overflow = 1UL;
+  }
+  val.frac = val.frac << 1;
+  val.whole = val.whole << 1;
+  val.whole += carry;
+  if (overflow) {
+    if (fixedpoint_is_neg(val)) val.neg_over = 1;
+    else val.pos_over = 1;
+  }
+  return val;
 }
 
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
