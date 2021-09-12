@@ -100,38 +100,85 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 }   */
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-  	if (left.neg && !right.neg) {
-    	left = fixedpoint_negate(left);
-    	return fixedpoint_sub(right, left);
+  	
+	// -(left) + (right) = (right) - (left)
+	if (left.neg && !right.neg) {
+    		left = fixedpoint_negate(left);
+    		return fixedpoint_sub(right, left);
   	}
 
+	// (left) + -(right) = (left) - (right)
   	if (!left.neg && right.neg) {
     	right = fixedpoint_negate(right);
     	return fixedpoint_sub(left, right);
   	}
 
+	// -(left) + -(right) = -(left + right)
   	if (left.neg && right.neg) {
     	left = fixedpoint_negate(left);
     	right = fixedpoint_negate(right);
     	return fixedpoint_negate( fixedpoint_add(left, right));
  	}
 
-  	unsigned int whole_carry = 0, frac_carry = 0, overflow = 0;
-  	unsigned int *carry_ptr = &whole_carry;
- 	  unsigned int *frac_carry_ptr = &frac_carry;
-  	unsigned int *overflow_ptr = &overflow;
+	// initialize variables
+  	uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
+ 	uint64_t *frac_carry_ptr = &frac_carry;
+  	uint64_t *overflow_ptr = &overflow;
 
+	// deal with frac first
   	uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
   	if (frac_carry) {
     		left.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
   	}
 
+	// get whole next
   	uint64_t whole_sum = get_add_val(left.whole, right.whole, overflow_ptr);
+	// if 
   	Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
   	sum.pos_over = overflow;
 
   	return sum;
 }
+
+/*
+Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
+	//get whole
+	int64_t sum_whole;
+	// base case: only case, overflow will be dealt with later
+	sum_whole = left.whole + right.whole;
+	// only complication with base case: overflow, which will be dealt with later
+	// get frac
+	uint64_t sum_frac;
+	uint64_t digit_normalized_right_frac = right.frac;
+	uint64_t digit_normalized_left_frac = left.frac;
+	// complication 1: different number of digits in both fracs
+	while (num_digits(digit_normalized_left_frac) > num_digits(digit_normalized_right_frac)) {
+		digit_normalized_right_frac *= 10;
+	}
+	while (num_digits(digit_normalized_left_frac) < num_digits(digit_normalized_right_frac)) {
+		printf("digits: %d", num_digits(digit_normalized_left_frac));
+		digit_normalized_left_frac *= 10;
+	}
+	int digits_in_sum = num_digits(left.frac);
+	// base case: same number of digits in both fracs, no carry over
+	sum_frac = digit_normalized_right_frac + digit_normalized_left_frac;
+	// complication 2: if sum_frac needs carrying over
+	if (num_digits(sum_frac) > digits_in_sum) {
+		sum_frac = sum_frac / 10;
+		sum_whole++;
+	}
+	// return sum
+	return fixedpoint_create2(sum_whole, sum_frac);
+}
+*/
+
+int num_digits(uint64_t tested_number) {
+    if (tested_number < 10) {
+	    return 1;
+    }
+    return 1 + num_digits(tested_number / 10);
+}
+
 
 uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2) {
         // do bitwise sum
@@ -374,14 +421,15 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   return val;
 }
 
-uint64_t get_add_val(uint64_t val1, uint64_t val2, unsigned int* carry) {
+uint64_t get_add_val(uint64_t val1, uint64_t val2, uint64_t* carry) {
+  // initialize variables
   uint64_t sum;
   uint64_t temp;
+  // if both 64th bits are 1, set them to zero, do addition with modified values, and remember to carry over later
   if ((val1 >> 63) && (val2 >> 63)) {
     *carry = 1;
     sum = (val1 ^ (1UL << 63)) + (val2 ^ (1UL << 63));
   }
-
   else if ((val1 >> 63) || (val2 >> 63)) {
     if (val2 >> 63) {
       temp = val1;
