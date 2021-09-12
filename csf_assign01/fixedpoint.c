@@ -85,8 +85,8 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 
   // WITH INT ADDITION - doesnt work
   /* if ( ( (left.frac >> 63) & 1) && ( (right.frac >> 63) & 1) ) {
-    left.frac -= (uint64_t) 1 << 63;
-    right.frac -= (uint64_t) 1 << 63;
+    left.frac -= 1UL << 63;
+    right.frac -= 1UL << 63;
     carry_over = 1;
   }
   Fixedpoint sum = fixedpoint_create2(left.whole + right.whole + carry_over, left.frac + right.frac);
@@ -142,8 +142,8 @@ uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend
                 // change state of carry_over_ptr to reflect this intention, change 64th bith of both addends to be 0
                 if (((addend1 >> 63) & 1 ) && ((addend2 >> 63) & 1)) {
                         *carry_over_ptr = 1;
-                        addend1 = addend1 ^ ((uint64_t) 1 << 63);
-                        addend2 = addend2 ^ ((uint64_t) 1 << 63);
+                        addend1 = addend1 ^ (1UL << 63);
+                        addend2 = addend2 ^ (1UL << 63);
                 }
                 local_carry_over = (addend1 & addend2) << 1;
                 local_sum = addend1 ^ addend2;
@@ -189,7 +189,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   if (right.frac > left.frac) {
     frac_diff = right.frac - left.frac;
-    frac_diff = ((uint64_t) 1 << 63) - frac_diff;
+    frac_diff = (1UL << 63) - frac_diff;
     whole_diff--;
   }
 
@@ -237,7 +237,7 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
   halved_frac = val.frac >> 1;
 
   // complication #2 with base case: when whole get cut, 0.5 may need to be carried over to frac
-  if (whole_is_odd) halved_frac += (uint64_t) 1 << 63;
+  if (whole_is_odd) halved_frac += 1UL << 63;
 
   // else, back to base case
   // return halved fixedpoint
@@ -299,7 +299,7 @@ int fixedpoint_is_valid(Fixedpoint val) {
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {
-  char* hex = malloc(35);
+  char* hex = calloc(35, 1);
   unsigned int i = 0;
   unsigned int *i_ptr = &i;
 
@@ -324,12 +324,6 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
   hex[i] = '\0';
 
   return hex;
-  
-  // TODO: implement
-  /* assert(0);
-  char *s = malloc(20);
-  strcpy(s, "<invalid>");
-  return s; */
 }
 
 void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole) {
@@ -366,13 +360,10 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   if (len > 16) *err = 1;
 
   for (int j = 0; j < len; ++j) {
-    if (*hex >= '0' && *hex <= '9') {
-      val += ((uint64_t) 1 << (4 * i)) * (*hex - '0');
-    }
+    if (*hex >= '0' && *hex <= '9') val += (1UL << (4 * i)) * (*hex - '0');
 
-    else if (*hex >= 'a' && *hex <= 'f') {
-      val += ((uint64_t) 1 << (4 * i)) * (*hex - 'a' + 10);
-    }
+    else if (*hex >= 'a' && *hex <= 'f') val += (1UL << (4 * i)) * (*hex - 'a' + 10);
+    else if (*hex >= 'A' && *hex <= 'F') val += (1UL << (4 * i)) * (*hex - 'A' + 10);
 
     else *err = 1;
 
@@ -388,7 +379,7 @@ uint64_t get_add_val(uint64_t val1, uint64_t val2, unsigned int* carry) {
   uint64_t temp;
   if ((val1 >> 63) && (val2 >> 63)) {
     *carry = 1;
-    sum = (val1 ^ ((uint64_t) 1 << 63)) + (val2 ^ ((uint64_t) 1 << 63));
+    sum = (val1 ^ (1UL << 63)) + (val2 ^ (1UL << 63));
   }
 
   else if ((val1 >> 63) || (val2 >> 63)) {
@@ -398,9 +389,9 @@ uint64_t get_add_val(uint64_t val1, uint64_t val2, unsigned int* carry) {
       val2 = temp;
     }
     
-    sum = (val1 ^ ((uint64_t) 1 << 63)) + val2;
+    sum = (val1 ^ (1UL << 63)) + val2;
     if (sum >> 63) {
-      sum = sum ^ ((uint64_t) 1 << 63);
+      sum = sum ^ (1UL << 63);
       *carry = 1;
     }
     else sum = val1 + val2;
