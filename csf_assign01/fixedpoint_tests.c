@@ -32,7 +32,6 @@ void test_format_as_hex(TestObjs *objs);
 void test_negate(TestObjs *objs);
 void test_add(TestObjs *objs);
 void test_sub(TestObjs *objs);
-void test_is_overflow_pos(TestObjs *objs);
 void test_is_err(TestObjs *objs);
 // TODO: add more test functions
 
@@ -52,7 +51,6 @@ int main(int argc, char **argv) {
   TEST(test_negate);
   TEST(test_add);
   TEST(test_sub);
-  TEST(test_is_overflow_pos);
   TEST(test_is_err);
 
   // IMPORTANT: if you add additional test functions (which you should!),
@@ -192,7 +190,6 @@ void test_add(TestObjs *objs) {
   (void) objs;
 
   // my test start
-
   Fixedpoint mytestL, mytestR, mytestSum;
   mytestL = fixedpoint_create_from_hex("a1.8");
   mytestR = fixedpoint_create_from_hex("1.c");
@@ -200,18 +197,43 @@ void test_add(TestObjs *objs) {
   ASSERT(163 == fixedpoint_whole_part(mytestSum));
   ASSERT(0x4000000000000000UL  == fixedpoint_frac_part(mytestSum));
   
-  // my test end
-
-
-  Fixedpoint lhs, rhs, sum;
-
+  // given test
+  Fixedpoint lhs, rhs, sum; //use these initializiations for following tests
   lhs = fixedpoint_create_from_hex("-c7252a193ae07.7a51de9ea0538c5");
   rhs = fixedpoint_create_from_hex("d09079.1e6d601");
   sum = fixedpoint_add(lhs, rhs);
   ASSERT(fixedpoint_is_neg(sum));
   ASSERT(0xc7252a0c31d8eUL == fixedpoint_whole_part(sum));
   ASSERT(0x5be47e8ea0538c50UL == fixedpoint_frac_part(sum));
+
+  // positive and positive, positive overflow
+  lhs = fixedpoint_create_from_hex("ffffffffffffffff.0");
+  rhs = fixedpoint_create_from_hex("ffffffffffffffff.0");
+  sum = fixedpoint_add(lhs, rhs);
+  ASSERT(fixedpoint_is_overflow_pos(sum));
+  // positive and negative
+  lhs = fixedpoint_create_from_hex("ffffffffffffffff.0");
+  rhs = fixedpoint_create_from_hex("-fffffffffffffffe.0");
+  sum = fixedpoint_add(lhs, rhs);
+  ASSERT(0x0000000000000001UL == fixedpoint_whole_part(sum));
+  // negative and positive
+  lhs = fixedpoint_create_from_hex("-fffffffffffffffe.0");
+  rhs = fixedpoint_create_from_hex("ffffffffffffffff.0");
+  sum = fixedpoint_add(lhs, rhs);
+  ASSERT(0x0000000000000001UL == fixedpoint_whole_part(sum));
+  // negative and negative 
+  lhs = fixedpoint_create_from_hex("-1.0");
+  rhs = fixedpoint_create_from_hex("-2.0");
+  sum = fixedpoint_add(lhs, rhs);
+  ASSERT(0x0000000000000003UL == fixedpoint_whole_part(sum));
+  ASSERT(fixedpoint_is_neg(sum));
+  // negative and negative, negative overflow
+  lhs = fixedpoint_create_from_hex("-ffffffffffffffff.0");
+  rhs = fixedpoint_create_from_hex("-ffffffffffffffff.0");
+  sum = fixedpoint_add(lhs, rhs);
+  ASSERT(fixedpoint_is_overflow_neg(sum));
 }
+
 
 void test_sub(TestObjs *objs) {
   (void) objs;
@@ -224,27 +246,6 @@ void test_sub(TestObjs *objs) {
   ASSERT(fixedpoint_is_neg(diff));
   ASSERT(0xccf35aa496c124UL == fixedpoint_whole_part(diff));
   ASSERT(0x0905000000000000UL == fixedpoint_frac_part(diff));
-}
-
-void test_is_overflow_pos(TestObjs *objs) {
-  Fixedpoint sum;
-
-  sum = fixedpoint_add(objs->max, objs->one);
-  ASSERT(fixedpoint_is_overflow_pos(sum));
-
-  sum = fixedpoint_add(objs->one, objs->max);
-  ASSERT(fixedpoint_is_overflow_pos(sum));
-
-  Fixedpoint negative_one = fixedpoint_negate(objs->one);
-
-  sum = fixedpoint_sub(objs->max, negative_one);
-  ASSERT(fixedpoint_is_overflow_pos(sum));
-
-  // MY TEST
-  sum = fixedpoint_add(fixedpoint_negate(objs->max), negative_one);
-  // printf("\npos_over: %d, neg_over: %d\n", sum.pos_over, sum.neg_over);
-  ASSERT(fixedpoint_is_overflow_neg(sum));
-
 }
 
 void test_is_err(TestObjs *objs) {
