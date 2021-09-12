@@ -356,7 +356,7 @@ int fixedpoint_is_underflow_pos(Fixedpoint val) {
 }
 
 int fixedpoint_is_valid(Fixedpoint val) {
-  return !(val.pos_over || val.neg_over || val.pos_under || val.neg_under);
+  return !(val.err || val.pos_over || val.neg_over || val.pos_under || val.neg_under);
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {
