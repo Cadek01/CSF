@@ -357,7 +357,10 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   uint64_t val = 0;
   int i = is_whole ? 0 : 15;
 
-  if (len > 16) *err = 1;
+  if (len > 16) {
+    *err = 1;
+    return 0;
+  }
 
   for (int j = 0; j < len; ++j) {
     if (*hex >= '0' && *hex <= '9') val += (1UL << (4 * i)) * (*hex - '0');
@@ -365,7 +368,10 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
     else if (*hex >= 'a' && *hex <= 'f') val += (1UL << (4 * i)) * (*hex - 'a' + 10);
     else if (*hex >= 'A' && *hex <= 'F') val += (1UL << (4 * i)) * (*hex - 'A' + 10);
 
-    else *err = 1;
+    else { 
+      *err = 1;
+      return 0;
+    }
 
     if (is_whole) { --hex; ++i; }
     else { ++hex; --i; }
