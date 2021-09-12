@@ -9,12 +9,12 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
-  Fixedpoint fixedpoint = {whole, 0, 1, 0, 0, 0, 0, 0, 0};
+  Fixedpoint fixedpoint = {whole, 0, 0, 0, 0, 0, 0, 0};
   return fixedpoint;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
-  Fixedpoint fixedpoint = {whole, frac, 1, 0, 0, 0, 0, 0, 0};
+  Fixedpoint fixedpoint = {whole, frac, 0, 0, 0, 0, 0, 0};
   return fixedpoint;  
 }
 
@@ -43,7 +43,6 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
   fixedpoint.neg = neg;
   fixedpoint.err = err;
-  fixedpoint.valid = !err;
   return fixedpoint;
 }
 
@@ -278,7 +277,6 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
   if (val.frac & 1) {
 	  if (fixedpoint_is_neg(val)) val.neg_under = 1;
 	  else val.pos_under = 1;
-	  val.valid = 0;
   }
   // base case: whole can get halved, fraction can get halved indepedently of each other (no carrying over)
   halved_whole = val.whole >> 1;
@@ -358,7 +356,7 @@ int fixedpoint_is_underflow_pos(Fixedpoint val) {
 }
 
 int fixedpoint_is_valid(Fixedpoint val) {
-  return val.valid;
+  return !(val.pos_over || val.neg_over || val.pos_under || val.neg_under);
 }
 
 char *fixedpoint_format_as_hex(Fixedpoint val) {

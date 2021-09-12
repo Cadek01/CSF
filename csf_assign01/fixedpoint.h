@@ -6,7 +6,7 @@
 typedef struct {
   // TODO: add fields
   uint64_t whole, frac;
-  int valid, neg, err, pos_over, neg_over, pos_under, neg_under;
+  int neg, err, pos_over, neg_over, pos_under, neg_under;
 } Fixedpoint;
 
 // Create a Fixedpoint value representing an integer.
