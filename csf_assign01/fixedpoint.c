@@ -5,9 +5,6 @@
 #include <assert.h>
 #include "fixedpoint.h"
 
-// You can remove this once all of the functions are fully implemented
-static Fixedpoint DUMMY;
-
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // define this.whole as whole, this.frac as 0
   // define the remaining fields as false (neg, err, overflow tags)
