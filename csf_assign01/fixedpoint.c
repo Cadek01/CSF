@@ -9,27 +9,36 @@
 static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
+  // define this.whole as whole, this.frac as 0
+  // define the remaining fields as false (neg, err, overflow tags)
   Fixedpoint fixedpoint = {whole, 0, 0, 0, 0, 0, 0, 0};
   return fixedpoint;
 }
 
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
+  // define this.whole as whole, this.frac as frac
+  // define the remaining fields as false (neg, err, overflow tags)
   Fixedpoint fixedpoint = {whole, frac, 0, 0, 0, 0, 0, 0};
   return fixedpoint;  
 }
 
 Fixedpoint fixedpoint_create_from_hex(const char *hex) {
+  // assume all fields are zero to start
   uint64_t whole = 0, frac = 0;
   int neg = 0, err = 0, is_frac = 0;
+  // initialize error pointer
   int *err_ptr = &err;
+  // get length of hex string
   int len_hex = strlen(hex);
 
+  // if hex starts with '-', make hex start off with next char, lower len_hex to compensate, and mark fixedpoint as neg
   if (*hex == '-') {
     neg = 1;
     ++hex;
     --len_hex;
   }
 
+  // detect where period in hex string is, everything to right represents whole and everything to left represents frac
   for (int i = 0; i < len_hex; i++) {
     if (hex[i] == '.') {
       is_frac = 1;
@@ -38,8 +47,10 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
     }
   }
 
+  // if no period detected, assume the whole hex string represents whole
   if (!is_frac) whole = hex_to_dec(hex, len_hex, 1, err_ptr);
 
+  // create fixedpoint, mark neg and err fields by their neg and err field status trackers used in this function
   Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
   fixedpoint.neg = neg;
   fixedpoint.err = err;
@@ -83,7 +94,7 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
 
   // WITH INT ADDITION - doesnt work
-  /* if ( ( (left.frac >> 63) & 1) && ( (right.frac >> 63) & 1) ) {
+  if ( ( (left.frac >> 63) & 1) && ( (right.frac >> 63) & 1) ) {
     left.frac -= 1UL << 63;
     right.frac -= 1UL << 63;
     carry_over = 1;
@@ -100,41 +111,43 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
 
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   	
-	// -(left) + (right) = (right) - (left)
-	if (left.neg && !right.neg) {
+  // -|left| + |right| = |right| - |left|
+  if (left.neg && !right.neg) {
     Fixedpoint left_copy = fixedpoint_negate(left);
     return fixedpoint_sub(right, left_copy);
   }
 
-	// (left) + -(right) = (left) - (right)
+  // |left| + -|right| = |left| - |right|
   if (!left.neg && right.neg) {
     Fixedpoint right_copy = fixedpoint_negate(right);
     return fixedpoint_sub(left, right_copy);
   }
 
-	// -(left) + -(right) = -(left + right)
+  // -|left| + -|right| = -(|left| + |right|)
   if (left.neg && right.neg) {
     Fixedpoint left_copy = fixedpoint_negate(left);
     Fixedpoint right_copy = fixedpoint_negate(right);
     return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
- 	}
+  }
 
-	// initialize variables
+  // initialize variables to keep track of any needed carrying and overflow
   uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
- 	uint64_t *frac_carry_ptr = &frac_carry;
+  uint64_t *frac_carry_ptr = &frac_carry;
   uint64_t *overflow_ptr = &overflow;
-	Fixedpoint addend1 = left;
-	Fixedpoint addend2 = right;
+  Fixedpoint addend1 = left;
+  Fixedpoint addend2 = right;
 
-	// deal with frac first
+  // get frac first
   uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
+  // if carrying over is needed, add 1 to addend1.whole
   if (frac_carry) {
     addend1.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
   }
 
-	// get whole next
+  // get whole next
   uint64_t whole_sum = get_add_val(addend1.whole, addend2.whole, overflow_ptr); 
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
+  // if the whole needs carrying over, overflow has occured
   sum.pos_over = overflow;
 
   /* uint64_t frac_sum = left.frac + right.frac;
@@ -177,7 +190,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
 	return fixedpoint_create2(sum_whole, sum_frac);
 }
 */
-
+/*
 int num_digits(uint64_t tested_number) {
     if (tested_number < 10) {
 	    return 1;
@@ -206,22 +219,26 @@ uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend
         // return sum, which is stored in addend1
         return addend1;
 }
+*/
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   Fixedpoint diff, temp;
   uint64_t whole_diff = 0, frac_diff = 0;
   int neg = 0;
 
+  // |left| - -|right| = |left| + |right|
   if (!left.neg && right.neg) {
     right = fixedpoint_negate(right);
     return fixedpoint_add(left, right);
   }
 
+  // -|left| - |right| = -(|left| + |right|)
   if (left.neg && !right.neg) {
     left = fixedpoint_negate(left);
     return fixedpoint_negate( fixedpoint_add(left, right) );
   }
 
+  // -|left| - -|right| = -(|left| - |right|)
   if (left.neg && right.neg) {
     temp = fixedpoint_negate(right);
     right = fixedpoint_negate(left);
@@ -229,8 +246,10 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
     return fixedpoint_negate(fixedpoint_sub(left, right));
   }
 
+  // if left and right are equal, return 0
   if (!fixedpoint_compare(left, right)) return fixedpoint_create(0);
 
+  // if left < right, result is negative; mark as such and switch left and right to get a positive result from substraction
   if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
     neg = 1;
     temp = right;
@@ -238,8 +257,10 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
     left = temp;
   }
 
+  // get whole difference
   whole_diff = left.whole - right.whole;
 
+  // ??
   if (right.frac > left.frac) {
     frac_diff = right.frac - left.frac;
     frac_diff = (~0UL) - frac_diff + 1;
@@ -248,24 +269,33 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   else frac_diff = left.frac - right.frac;
 
+  // create difference
   diff = fixedpoint_create2(whole_diff, frac_diff);
 
+  // change neg field of difference to match the neg tracker used in this function
   if (neg) diff = fixedpoint_negate(diff);
 
+  // return difference
   return diff;
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
   int temp;
+
+  // if value is equal to zero, do nothing
   if (fixedpoint_is_zero(val)) return val;
+  
+  // set positive value to negative, negative values to positive
   val.neg = val.neg ? 0 : 1;
 
+  // switch positive overflow and negative overflow status
   if (val.pos_over || val.neg_over) {
     temp = val.pos_over;
     val.pos_over = val.neg_over;
     val.neg_over = temp;
   }
 
+  // switch positive underflow and negative underflow status
   if (val.pos_under || val.neg_under) {
     temp = val.pos_under;
     val.pos_under = val.neg_under;
@@ -291,9 +321,11 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
   // complication #2 with base case: when whole get cut, 0.5 may need to be carried over to frac
   if (whole_is_odd) halved_frac += 1UL << 63;
 
-  // else, back to base case
+  // else, base case, do nothing
   // return halved fixedpoint
   Fixedpoint half = fixedpoint_create2(halved_whole, halved_frac);
+
+  // half inherits underflow statuses of its progenitor fixedpoint and negative status
   half.neg_under = val.neg_under;
   half.pos_under = val.pos_under;
   half.neg = val.neg;
@@ -302,34 +334,56 @@ Fixedpoint fixedpoint_halve(Fixedpoint val) {
 
 Fixedpoint fixedpoint_double(Fixedpoint val) {
   // return fixedpoint_add(val, val);
+
+  // create tracking for carrying and overflow
   uint64_t carry = 0, overflow = 0;
+
+  // recognize need to carry over if last bit of frac is 1
   if (val.frac & (1UL << 63)) {
     carry = 1UL;
   }
+
+  // recognize that overflow will occur if last bit of whole is 1
   if (val.whole & (1UL << 63)) {
     overflow = 1UL;
   }
+
+  // do bit shifting to double
   val.frac = val.frac << 1;
   val.whole = val.whole << 1;
+
+  // add carry to whole;
   val.whole += carry;
+
+  // set overflow statuses, either positive or neg based on neg status of value doubled
   if (overflow) {
     if (fixedpoint_is_neg(val)) val.neg_over = 1;
     else val.pos_over = 1;
   }
+
+  // return val
   return val;
 }
 
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
+  // if values are equal, return 0
   if ( (left.whole == right.whole) && (left.frac == right.frac) && (left.neg == right.neg)) return 0;
 
+  // if left is positive and right is negative, left is greater, return 1
   if (!left.neg) {
     if (right.neg) return 1;
+    // is both values are pos, and |left| > |right|, left is greater, return 1
     if ( (left.whole > right.whole) || ( (left.whole == right.whole) && (left.frac > right.frac) )) return 1;
+    // else, right is greater, return -1
     return -1;
   }
 
+  // if right is positive, only option left is that left is negative. right is greater, return -1 
   if (!right.neg) return -1;
+
+  // both values must be neg to reach this point, if |left| < |right|, left is greater, return 1
   if ( (left.whole < right.whole) || ( (left.whole == right.whole) && (left.frac < right.frac) )) return 1;
+  // else return -1
   return -1;
 }
 
