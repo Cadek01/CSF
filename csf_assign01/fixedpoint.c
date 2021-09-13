@@ -28,19 +28,12 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   // get length of hex string
   int len_hex = strlen(hex);
 
+  // deal with empty string
   if (len_hex == 0) {
 	  Fixedpoint fixedpoint = fixedpoint_create2(0, 0);
 	  fixedpoint.err = 1;
 	  return fixedpoint;
   }
-
-  /*
-  if (len_hex == 1 && *hex == '.') {
-  	Fixedpoint fixedpoint = fixedpoint_create2(0, 0);
-	Fixedpoint.err = 1;
-	return fixedpoint;
-  }
-  */
 
   // if hex starts with '-', make hex start off with next char, lower len_hex to compensate, and mark fixedpoint as neg
   if (*hex == '-') {
@@ -358,25 +351,31 @@ uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   uint64_t val = 0;
   int i = is_whole ? 0 : 15;
 
+  // if empty sting was passed to this function, interpret as 0 and mark error
   if(len == 0) {
     *err=1;
     return 0;
   } 
 
+  // if string is longer than 16, mark error
   if (len > 16) *err = 1;
 
+  // for each char in string, translate alphanumeric chars (0-9, a-f/A-F) into bits
   for (int j = 0; j < len; ++j) {
     if (*hex >= '0' && *hex <= '9') val += (1UL << (4 * i)) * (*hex - '0');
-
     else if (*hex >= 'a' && *hex <= 'f') val += (1UL << (4 * i)) * (*hex - 'a' + 10);
     else if (*hex >= 'A' && *hex <= 'F') val += (1UL << (4 * i)) * (*hex - 'A' + 10);
 
+    // if char is not expected alphanumeric (0-9, a-f/A-F), mark error
     else *err = 1;
 
+    // if whole, move the pointer up; if frac, do opposite
+    // (ex:12345, if whole, pointer would start on 5 and frac would start on 1)
     if (is_whole) { --hex; ++i; }
     else { ++hex; --i; }
   }
 
+  // return created value
   return val;
 }
 
