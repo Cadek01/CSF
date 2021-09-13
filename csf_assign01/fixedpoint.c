@@ -28,6 +28,20 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   // get length of hex string
   int len_hex = strlen(hex);
 
+  if (len_hex == 0) {
+	  Fixedpoint fixedpoint = fixedpoint_create2(0, 0);
+	  fixedpoint.err = 1;
+	  return fixedpoint;
+  }
+
+  /*
+  if (len_hex == 1 && *hex == '.') {
+  	Fixedpoint fixedpoint = fixedpoint_create2(0, 0);
+	Fixedpoint.err = 1;
+	return fixedpoint;
+  }
+  */
+
   // if hex starts with '-', make hex start off with next char, lower len_hex to compensate, and mark fixedpoint as neg
   if (*hex == '-') {
     neg = 1;
@@ -437,6 +451,11 @@ void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole) {
 uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
   uint64_t val = 0;
   int i = is_whole ? 0 : 15;
+
+  if(len == 0) {
+    *err=1;
+    return 0;
+  } 
 
   if (len > 16) *err = 1;
 

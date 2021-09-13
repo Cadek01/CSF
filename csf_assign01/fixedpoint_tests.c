@@ -116,6 +116,36 @@ void test_create_from_hex(TestObjs *objs) {
   ASSERT(fixedpoint_is_valid(val1));
   ASSERT(0xf6a5865UL == fixedpoint_whole_part(val1));
   ASSERT(0x00f2000000000000UL == fixedpoint_frac_part(val1));
+  
+  val1 = fixedpoint_create_from_hex("");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+
+  val1 = fixedpoint_create_from_hex(".");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+
+  val1 = fixedpoint_create_from_hex("0");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+
+  val1 = fixedpoint_create_from_hex("0.0");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(!fixedpoint_is_err(val1));
+
+  val1 = fixedpoint_create_from_hex("0.");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+
+  val1 = fixedpoint_create_from_hex(".0");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+
 }
 
 void test_format_as_hex(TestObjs *objs) {
