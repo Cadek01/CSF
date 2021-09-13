@@ -112,22 +112,26 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   	
   // -|left| + |right| = |right| - |left|
   if (left.neg && !right.neg) {
-    Fixedpoint left_copy = fixedpoint_negate(left);
-    return fixedpoint_sub(right, left_copy);
+    // Fixedpoint left_copy = fixedpoint_negate(left);
+    left.neg = 0;
+    return fixedpoint_sub(right, left);
   }
 
   // |left| + -|right| = |left| - |right|
   if (!left.neg && right.neg) {
-    Fixedpoint right_copy = fixedpoint_negate(right);
-    return fixedpoint_sub(left, right_copy);
+    // Fixedpoint right_copy = fixedpoint_negate(right);
+    right.neg = 0;
+    return fixedpoint_sub(left, right);
   }
 
   // -|left| + -|right| = -(|left| + |right|)
   if (left.neg && right.neg) {
-    Fixedpoint left_copy = fixedpoint_negate(left);
-    Fixedpoint right_copy = fixedpoint_negate(right);
+    // Fixedpoint left_copy = fixedpoint_negate(left);
+    // Fixedpoint right_copy = fixedpoint_negate(right);
     // return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
-    Fixedpoint res = fixedpoint_add(left_copy, right_copy);
+    left.neg = 0;
+    right.neg = 0;
+    Fixedpoint res = fixedpoint_add(left, right);
     res.neg = 1;
     res.neg_over = res.pos_over;
     res.pos_over = 0;
@@ -178,13 +182,15 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   // |left| - -|right| = |left| + |right|
   if (!left.neg && right.neg) {
-    right = fixedpoint_negate(right);
+    // right = fixedpoint_negate(right);
+    right.neg = 0;
     return fixedpoint_add(left, right);
   }
 
   // -|left| - |right| = -(|left| + |right|)
   if (left.neg && !right.neg) {
-    left = fixedpoint_negate(left);
+    // left = fixedpoint_negate(left);
+    left.neg = 0;
     Fixedpoint diff = fixedpoint_add(left, right);
     diff.neg = 1;
     diff.neg_over = diff.pos_over;
@@ -193,10 +199,14 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   // -|left| - -|right| = -(|left| - |right|)
   if (left.neg && right.neg) {
-    temp = fixedpoint_negate(right);
+    /* temp = fixedpoint_negate(right);
     right = fixedpoint_negate(left);
-    left = temp;
-    return fixedpoint_negate(fixedpoint_sub(left, right));
+    left = temp; */
+    left.neg = 0;
+    right.neg = 0;
+    Fixedpoint diff = fixedpoint_sub(right, left);
+    return diff;
+    // return fixedpoint_negate(fixedpoint_sub(left, right));
   }
 
   // if left and right are equal, return 0
