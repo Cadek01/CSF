@@ -6,7 +6,7 @@
 #include "fixedpoint.h"
 
 // You can remove this once all of the functions are fully implemented
-// static Fixedpoint DUMMY;
+static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // define this.whole as whole, this.frac as 0
@@ -275,7 +275,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   // get whole difference
   whole_diff = left.whole - right.whole;
 
-  // ??
+  // if borrowing over from whole is necessary, do so
   if (right.frac > left.frac) {
     frac_diff = right.frac - left.frac;
     frac_diff = (~0UL) - frac_diff + 1;
