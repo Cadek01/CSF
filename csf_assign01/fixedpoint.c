@@ -192,6 +192,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
     diff.neg = 1;
     diff.neg_over = diff.pos_over;
     diff.pos_over = 0;
+    return diff;
   }
 
   // -|left| - -|right| = -(|left| - |right|)
@@ -211,10 +212,9 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   // if left < right, result is negative; mark as such and switch left and right to get a positive result from substraction
   if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
-    neg = 1;
-    temp = right;
-    right = left;
-    left = temp;
+    Fixedpoint diff = fixedpoint_sub(right, left);
+    diff.neg = 1;
+    return diff;
   }
 
   // get whole difference
