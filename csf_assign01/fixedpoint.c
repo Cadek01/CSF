@@ -6,7 +6,7 @@
 #include "fixedpoint.h"
 
 // You can remove this once all of the functions are fully implemented
-static Fixedpoint DUMMY;
+// static Fixedpoint DUMMY;
 
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // define this.whole as whole, this.frac as 0
@@ -100,8 +100,7 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
     carry_over = 1;
   }
   Fixedpoint sum = fixedpoint_create2(left.whole + right.whole + carry_over, left.frac + right.frac);
-  */
-  /* if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
+  if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
     if ( (fixedpoint_compare(left, sum) != -1) || (fixedpoint_compare(right, sum) != -1)) {
       sum.pos_over = 1;
     }
@@ -127,11 +126,16 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   if (left.neg && right.neg) {
     Fixedpoint left_copy = fixedpoint_negate(left);
     Fixedpoint right_copy = fixedpoint_negate(right);
-    return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
+    // return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
+    Fixedpoint res = fixedpoint_add(left_copy, right_copy);
+    res.neg = 1;
+    res.neg_over = res.pos_over;
+    res.pos_over = 0;
+    return res;
   }
 
   // initialize variables to keep track of any needed carrying and overflow
-  uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
+  /* uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
   uint64_t *frac_carry_ptr = &frac_carry;
   uint64_t *overflow_ptr = &overflow;
   Fixedpoint addend1 = left;
@@ -148,15 +152,23 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   uint64_t whole_sum = get_add_val(addend1.whole, addend2.whole, overflow_ptr); 
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
   // if the whole needs carrying over, overflow has occured
-  sum.pos_over = overflow;
+  sum.pos_over = overflow;*/
 
-  /* uint64_t frac_sum = left.frac + right.frac;
-  uint64_t whole_sum = left.whole + right.whole;
+  uint64_t frac_sum = left.frac + right.frac;
+  uint64_t whole_sum = 0;
+  int over = 0;
+
   if (frac_sum < right.frac) whole_sum += 1UL;
+  whole_sum += left.whole;
+  if (whole_sum < left.whole) over = 1;
+
+  whole_sum += right.whole;
+  if (whole_sum < right.whole) over = 1;
 
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  if (whole_sum < right.whole) sum.pos_over = 1;
-  return sum; */
+  sum.pos_over = over;
+
+  return sum;
 }
 
 /*
@@ -235,7 +247,10 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   // -|left| - |right| = -(|left| + |right|)
   if (left.neg && !right.neg) {
     left = fixedpoint_negate(left);
-    return fixedpoint_negate( fixedpoint_add(left, right) );
+    Fixedpoint diff = fixedpoint_add(left, right);
+    diff.neg = 1;
+    diff.neg_over = diff.pos_over;
+    diff.pos_over = 0;
   }
 
   // -|left| - -|right| = -(|left| - |right|)
@@ -289,11 +304,11 @@ Fixedpoint fixedpoint_negate(Fixedpoint val) {
   val.neg = val.neg ? 0 : 1;
 
   // switch positive overflow and negative overflow status
-  if (val.pos_over || val.neg_over) {
+  /* if (val.pos_over || val.neg_over) {
     temp = val.pos_over;
     val.pos_over = val.neg_over;
     val.neg_over = temp;
-  }
+  } */
 
   // switch positive underflow and negative underflow status
   if (val.pos_under || val.neg_under) {
