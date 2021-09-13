@@ -171,68 +171,6 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   return sum;
 }
 
-/*
-Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-	//get whole
-	int64_t sum_whole;
-	// base case: only case, overflow will be dealt with later
-	sum_whole = left.whole + right.whole;
-	// only complication with base case: overflow, which will be dealt with later
-	// get frac
-	uint64_t sum_frac;
-	uint64_t digit_normalized_right_frac = right.frac;
-	uint64_t digit_normalized_left_frac = left.frac;
-	// complication 1: different number of digits in both fracs
-	while (num_digits(digit_normalized_left_frac) > num_digits(digit_normalized_right_frac)) {
-		digit_normalized_right_frac *= 10;
-	}
-	while (num_digits(digit_normalized_left_frac) < num_digits(digit_normalized_right_frac)) {
-		printf("digits: %d", num_digits(digit_normalized_left_frac));
-		digit_normalized_left_frac *= 10;
-	}
-	int digits_in_sum = num_digits(left.frac);
-	// base case: same number of digits in both fracs, no carry over
-	sum_frac = digit_normalized_right_frac + digit_normalized_left_frac;
-	// complication 2: if sum_frac needs carrying over
-	if (num_digits(sum_frac) > digits_in_sum) {
-		sum_frac = sum_frac / 10;
-		sum_whole++;
-	}
-	// return sum
-	return fixedpoint_create2(sum_whole, sum_frac);
-}
-*/
-/*
-int num_digits(uint64_t tested_number) {
-    if (tested_number < 10) {
-	    return 1;
-    }
-    return 1 + num_digits(tested_number / 10);
-}
-
-
-uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2) {
-        // do bitwise sum
-        uint64_t local_carry_over = 0;
-        uint64_t local_sum = 0;
-        while (addend2 != 0) {
-                // if 64th bit of both addend 1 & addend2 are a 1, need to carry over into whole
-                // change state of carry_over_ptr to reflect this intention, change 64th bith of both addends to be 0
-                if (((addend1 >> 63) & 1 ) && ((addend2 >> 63) & 1)) {
-                        *carry_over_ptr = 1;
-                        addend1 = addend1 ^ (1UL << 63);
-                        addend2 = addend2 ^ (1UL << 63);
-                }
-                local_carry_over = (addend1 & addend2) << 1;
-                local_sum = addend1 ^ addend2;
-                addend1 = local_sum;
-                addend2 = local_carry_over;
-        }
-        // return sum, which is stored in addend1
-        return addend1;
-}
-*/
-
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   Fixedpoint diff, temp;
   uint64_t whole_diff = 0, frac_diff = 0;

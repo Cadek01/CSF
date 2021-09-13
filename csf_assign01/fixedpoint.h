@@ -260,10 +260,4 @@ void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole);
 // add description
 uint64_t get_add_val(uint64_t val1, uint64_t val2, uint64_t* carry);
 
-// add description
-uint64_t bitwise_sum(uint64_t* carry_over_ptr, uint64_t addend1, uint64_t addend2);
-
-// add description
-int num_digits(uint64_t tested_number);
-
 #endif // FIXEDPREC_H
