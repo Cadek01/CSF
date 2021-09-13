@@ -149,7 +149,7 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
   // if the whole needs carrying over, overflow has occured
   sum.pos_over = overflow;
-
+  return sum;
   /* uint64_t frac_sum = left.frac + right.frac;
   uint64_t whole_sum = left.whole + right.whole;
   if (frac_sum < right.frac) whole_sum += 1UL;
@@ -260,7 +260,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   // get whole difference
   whole_diff = left.whole - right.whole;
 
-  // ??
+  // if borrowing over from whole is necessary, do so
   if (right.frac > left.frac) {
     frac_diff = right.frac - left.frac;
     frac_diff = (~0UL) - frac_diff + 1;
