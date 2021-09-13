@@ -58,6 +58,11 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
   fixedpoint.neg = neg;
   fixedpoint.err = err;
+  
+  // if fixedpoint is 0.0, make non-neg
+  if (fixedpoint_whole_part(fixedpoint) == 0 && fixedpoint_frac_part(fixedpoint)) {
+    fixedpoint.neg = 0;
+  }
   return fixedpoint;
 }
 

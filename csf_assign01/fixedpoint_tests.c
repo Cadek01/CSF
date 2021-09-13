@@ -141,11 +141,30 @@ void test_create_from_hex(TestObjs *objs) {
   ASSERT(0 == fixedpoint_frac_part(val1));
   ASSERT(fixedpoint_is_err(val1));
 
-  val1 = fixedpoint_create_from_hex(".0");
+  val1 = fixedpoint_create_from_hex(". ");
   ASSERT(0 == fixedpoint_whole_part(val1));
   ASSERT(0 == fixedpoint_frac_part(val1));
   ASSERT(fixedpoint_is_err(val1));
 
+  val1 = fixedpoint_create_from_hex("  ");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+
+  val1 = fixedpoint_create_from_hex("0.0.0");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+  
+  val1 = fixedpoint_create_from_hex("0..0");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(fixedpoint_is_err(val1));
+
+  val1 = fixedpoint_create_from_hex("-0.0");
+  ASSERT(0 == fixedpoint_whole_part(val1));
+  ASSERT(0 == fixedpoint_frac_part(val1));
+  ASSERT(!fixedpoint_is_err(val1));
 }
 
 void test_format_as_hex(TestObjs *objs) {
