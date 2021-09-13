@@ -76,149 +76,61 @@ uint64_t fixedpoint_frac_part(Fixedpoint val) {
   return val.frac;
 }
 
-/* Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
-  if (left.neg && !right.neg) {
-    left = fixedpoint_negate(left);
-    return fixedpoint_sub(right, left);
-  }
-
-  if (!left.neg && right.neg) {
-    right = fixedpoint_negate(right);
-    return fixedpoint_sub(left, right);
-  }
-
-  if (left.neg && right.neg) {
-    left = fixedpoint_negate(left);
-    right = fixedpoint_negate(right);
-    return fixedpoint_negate( fixedpoint_add(left, right));
-  }
-
-  // start with frac:
-  // create pointer to track any carry-over needed
-  uint64_t carry_over = 0;
-  uint64_t* carry_over_ptr = &carry_over;
-  // get frac_sum, modified cary_over pointer
-  uint64_t frac_sum = bitwise_sum(carry_over_ptr, left.frac, right.frac);
-  // move on to whole:
-  uint64_t whole_sum = carry_over + left.whole + right.whole; 
-  // return overall fixedpoint
-  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-
-  // WITH INT ADDITION - doesnt work
-  if ( ( (left.frac >> 63) & 1) && ( (right.frac >> 63) & 1) ) {
-    left.frac -= 1UL << 63;
-    right.frac -= 1UL << 63;
-    carry_over = 1;
-  }
-  Fixedpoint sum = fixedpoint_create2(left.whole + right.whole + carry_over, left.frac + right.frac);
-  if (!fixedpoint_is_zero(left) && !fixedpoint_is_zero(right)) {
-    if ( (fixedpoint_compare(left, sum) != -1) || (fixedpoint_compare(right, sum) != -1)) {
-      sum.pos_over = 1;
-    }
-  }
-  return sum; 
-}   */
-
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
+  Fixedpoint sum;
   	
   // -|left| + |right| = |right| - |left|
-  if (left.neg && !right.neg) {
-    // Fixedpoint left_copy = fixedpoint_negate(left);
-    left.neg = 0;
-    return fixedpoint_sub(right, left);
-  }
+  if (left.neg && !right.neg) return fixedpoint_sub(right, fixedpoint_negate(left));
 
   // |left| + -|right| = |left| - |right|
-  if (!left.neg && right.neg) {
-    // Fixedpoint right_copy = fixedpoint_negate(right);
-    right.neg = 0;
-    return fixedpoint_sub(left, right);
-  }
+  if (!left.neg && right.neg) return fixedpoint_sub(left, fixedpoint_negate(right));
 
   // -|left| + -|right| = -(|left| + |right|)
   if (left.neg && right.neg) {
-    // Fixedpoint left_copy = fixedpoint_negate(left);
-    // Fixedpoint right_copy = fixedpoint_negate(right);
-    // return fixedpoint_negate( fixedpoint_add(left_copy, right_copy));
-    left.neg = 0;
-    right.neg = 0;
-    Fixedpoint res = fixedpoint_add(left, right);
-    res.neg = 1;
-    res.neg_over = res.pos_over;
-    res.pos_over = 0;
-    return res;
+    sum = fixedpoint_add(fixedpoint_negate(left), fixedpoint_negate(right));
+    sum.neg = 1;
+    sum.neg_over = sum.pos_over;
+    sum.pos_over = 0;
+    return sum;
   }
 
-  // initialize variables to keep track of any needed carrying and overflow
-  /* uint64_t whole_carry = 0, frac_carry = 0, overflow = 0;
-  uint64_t *frac_carry_ptr = &frac_carry;
-  uint64_t *overflow_ptr = &overflow;
-  Fixedpoint addend1 = left;
-  Fixedpoint addend2 = right;
+  uint64_t frac_sum = 0, whole_sum = 0;
+  int is_overflow = 0;
 
-  // get frac first
-  uint64_t frac_sum = get_add_val(left.frac, right.frac, frac_carry_ptr);
-  // if carrying over is needed, add 1 to addend1.whole
-  if (frac_carry) {
-    addend1.whole = get_add_val(left.whole, frac_carry, overflow_ptr);
-  }
-
-  // get whole next
-  uint64_t whole_sum = get_add_val(addend1.whole, addend2.whole, overflow_ptr); 
-  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  // if the whole needs carrying over, overflow has occured
-  sum.pos_over = overflow;*/
-
-  uint64_t frac_sum = left.frac + right.frac;
-  uint64_t whole_sum = 0;
-  int over = 0;
-
+  frac_sum = left.frac + right.frac;
   if (frac_sum < right.frac) whole_sum += 1UL;
+
   whole_sum += left.whole;
-  if (whole_sum < left.whole) over = 1;
+  if (whole_sum < left.whole) is_overflow = 1;
 
   whole_sum += right.whole;
-  if (whole_sum < right.whole) over = 1;
+  if (whole_sum < right.whole) is_overflow = 1;
 
-  Fixedpoint sum = fixedpoint_create2(whole_sum, frac_sum);
-  sum.pos_over = over;
+  sum = fixedpoint_create2(whole_sum, frac_sum);
+  sum.pos_over = is_overflow;
 
   return sum;
 }
 
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
-  Fixedpoint diff, temp;
+  Fixedpoint diff;
   uint64_t whole_diff = 0, frac_diff = 0;
-  int neg = 0;
 
   // |left| - -|right| = |left| + |right|
-  if (!left.neg && right.neg) {
-    // right = fixedpoint_negate(right);
-    right.neg = 0;
-    return fixedpoint_add(left, right);
-  }
+  if (!left.neg && right.neg) return fixedpoint_add(left, fixedpoint_negate(right));
 
   // -|left| - |right| = -(|left| + |right|)
   if (left.neg && !right.neg) {
-    // left = fixedpoint_negate(left);
-    left.neg = 0;
-    Fixedpoint diff = fixedpoint_add(left, right);
+    diff = fixedpoint_add(fixedpoint_negate(left), right);
     diff.neg = 1;
     diff.neg_over = diff.pos_over;
     diff.pos_over = 0;
     return diff;
   }
 
-  // -|left| - -|right| = -(|left| - |right|)
+  // -|left| - -|right| = -|right| - |left|
   if (left.neg && right.neg) {
-    /* temp = fixedpoint_negate(right);
-    right = fixedpoint_negate(left);
-    left = temp; */
-    left.neg = 0;
-    right.neg = 0;
-    Fixedpoint diff = fixedpoint_sub(right, left);
-    return diff;
-    // return fixedpoint_negate(fixedpoint_sub(left, right));
+    return fixedpoint_sub(fixedpoint_negate(right), fixedpoint_negate(left));
   }
 
   // if left and right are equal, return 0
@@ -226,7 +138,7 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   // if left < right, result is negative; mark as such and switch left and right to get a positive result from substraction
   if ((left.whole < right.whole) || ((left.whole == right.whole) && (left.frac < right.frac))) {
-    Fixedpoint diff = fixedpoint_sub(right, left);
+    diff = fixedpoint_sub(right, left);
     diff.neg = 1;
     return diff;
   }
@@ -243,14 +155,8 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 
   else frac_diff = left.frac - right.frac;
 
-  // create difference
-  diff = fixedpoint_create2(whole_diff, frac_diff);
-
-  // change neg field of difference to match the neg tracker used in this function
-  if (neg) diff = fixedpoint_negate(diff);
-
   // return difference
-  return diff;
+  return fixedpoint_create2(whole_diff, frac_diff);
 }
 
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
