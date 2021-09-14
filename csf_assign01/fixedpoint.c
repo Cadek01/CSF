@@ -12,6 +12,13 @@
 #include <assert.h>
 #include "fixedpoint.h"
 
+// Create a Fixedpoint value representing an integer.
+//
+// Parameters:
+//   whole - the value of the whole part of the representation
+//
+// Returns:
+//   the Fixedpoint value
 Fixedpoint fixedpoint_create(uint64_t whole) {
   // define this.whole as whole, this.frac as 0
   // define the remaining fields as false (neg, err, overflow tags)
@@ -19,6 +26,16 @@ Fixedpoint fixedpoint_create(uint64_t whole) {
   return fixedpoint;
 }
 
+// Create a Fixedpoint value from specified whole and fractional values.
+//
+// Parametrs:
+//   whole - the value of the whole part of the representation
+//   frac - the value of the fractional part of the representation, where
+//          the highest bit is the halves (2^-1) place, the second highest
+//          bit is the fourths (2^-2) place, etc.
+//
+// Returns:
+//   the Fixedpoint value
 Fixedpoint fixedpoint_create2(uint64_t whole, uint64_t frac) {
   // define this.whole as whole, this.frac as frac
   // define the remaining fields as false (neg, err, overflow tags)
@@ -32,13 +49,6 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   int neg = 0, err = 0, is_frac = 0;
   int *err_ptr = &err; // initialize error pointer
   int len_hex = strlen(hex); // get length of string
-
-  // return erroneous fixedpoint for empty string
-  if (len_hex == 0) {
-	  Fixedpoint fixedpoint = fixedpoint_create2(0, 0);
-	  fixedpoint.err = 1;
-	  return fixedpoint;
-  }
 
   // determine the sign of the fixedpoint, move forward in the parsing of the string
   // (decrement length to be iterated through and move char pointer ahead)
@@ -72,14 +82,41 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   return fixedpoint; // return fixedpoint
 }
 
+// Get the whole part of the given Fixedpoint value.
+//
+// Parameters:
+//   val - a valid Fixedpoint value
+//
+// Returns:
+//   a uint64_t value which is the whole part of the Fixedpoint value
 uint64_t fixedpoint_whole_part(Fixedpoint val) {
-  return val.whole; // return whole value
+  return val.whole;
 }
 
+// Get the fractional part of the given Fixedpoint value.
+//
+// Parameters:
+//   val - a valid Fixedpoint value
+//
+// Returns:
+//   a uint64_t value which is the fractional part of the Fixedpoint value
 uint64_t fixedpoint_frac_part(Fixedpoint val) {
-  return val.frac; // return fractional value
+  return val.frac;
 }
 
+// Compute the sum of two valid Fixedpoint values.
+//
+// Parameters:
+//   left - the left Fixedpoint value
+//   right - the right Fixedpoint value
+//
+// Returns:
+//   if the sum left + right is in the range of values that can be represented
+//   exactly, the sum is returned;
+//   if the sum left + right is not in the range of values that can be
+//   represented, then a value for which either fixedpoint_is_overflow_pos or
+//   fixedpoint_is_overflow_neg returns true is returned (depending on whether
+//   the overflow was positive or negative)
 Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   Fixedpoint sum; // declare sum
   	
@@ -120,6 +157,19 @@ Fixedpoint fixedpoint_add(Fixedpoint left, Fixedpoint right) {
   return sum;
 }
 
+// Compute the difference of two valid Fixedpoint values.
+//
+// Parameters:
+//   left - the left Fixedpoint value
+//   right - the right Fixedpoint value
+//
+// Returns:
+//   if the difference left - right is in the range of values that can be represented
+//   exactly, the difference is returned;
+//   if the difference left - right is not in the range of values that can be
+//   represented, then a value for which either fixedpoint_is_overflow_pos or
+//   fixedpoint_is_overflow_neg returns true is returned (depending on whether
+//   the overflow was positive or negative)
 Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   Fixedpoint diff; // declare/initialize variables
   uint64_t whole_diff = 0, frac_diff = 0;
@@ -166,85 +216,82 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
   return fixedpoint_create2(whole_diff, frac_diff);
 }
 
+// Negate a valid Fixedpoint value.  (I.e. a value with the same magnitude but
+// the opposite sign is returned.)  As a special case, the zero value is considered
+// to be its own negation.
+//
+// Parameters:
+//   val - a valid Fixedpoint value
+//
+// Returns:
+//   the negation of val
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
-  int temp;
-
-  // if value is equal to zero, do nothing
-  if (fixedpoint_is_zero(val)) return val;
+  if (fixedpoint_is_zero(val)) return val; // if value is equal to zero, do nothing
   
   // set positive value to negative, negative values to positive
   val.neg = val.neg ? 0 : 1;
-
-  // switch positive underflow and negative underflow status
-  if (val.pos_under || val.neg_under) {
-    temp = val.pos_under;
-    val.pos_under = val.neg_under;
-    val.neg_under = temp;
-  }
   return val;
 }
 
+// Return a Fixedpoint value that is exactly 1/2 the value of the given one.
+//
+// Parameters:
+//   val - a valid Fixedpoint value
+//
+// Return:
+//   a Fixedpoint value exactly 1/2 of the given one, if it can be represented exactly;
+//   otherwise, a Fixedpoint value for which either fixedpoint_is_underflow_pos
+//   or fixedpoint_is_underflow_neg returns true (depending on whether the
+//   computed value would have been positive or negative)
 Fixedpoint fixedpoint_halve(Fixedpoint val) {
-  uint64_t halved_whole = 0, halved_frac = 0;
-  int whole_is_odd = val.whole & 1;
+  uint64_t halved_whole = 0, halved_frac = 0; // initalize values
+  int whole_is_odd = val.whole & 1; // mark as odd if trailing bit is 1
 
-  // complication #1 with base case: frac looses information when shifted over by 1 bit because already 64th bit had information in it
-  // need to mark as underflow (pos if val is pos, neg is val is neg)
+  // underflow occurs if the 64th bit of fraction is a 1 (the value is lost)
   if (val.frac & 1) {
-	  if (fixedpoint_is_neg(val)) val.neg_under = 1;
+	  if (fixedpoint_is_neg(val)) val.neg_under = 1; // determine sign of underflow (halving yields same sign)
 	  else val.pos_under = 1;
   }
-  // base case: whole can get halved, fraction can get halved indepedently of each other (no carrying over)
+  // divide whole and fraction by 2
   halved_whole = val.whole >> 1;
   halved_frac = val.frac >> 1;
 
-  // complication #2 with base case: when whole get cut, 0.5 may need to be carried over to frac
+  // carry over 1 to the halves bit if necessary
+  // this will not affect underflow since halved fraction must have lead bit as 0
   if (whole_is_odd) halved_frac += 1UL << 63;
 
-  // else, base case, do nothing
-  // return halved fixedpoint
+  // assign appropriate underflow/sign values and return
   Fixedpoint half = fixedpoint_create2(halved_whole, halved_frac);
-
-  // half inherits underflow statuses of its progenitor fixedpoint and negative status
   half.neg_under = val.neg_under;
   half.pos_under = val.pos_under;
   half.neg = val.neg;
   return half;
 }
 
+// Return a Fixedpoint value that is exactly twice the value of the given one.
+//
+// Parameters:
+//   val - a valid Fixedpoint value
+//
+// Return:
+//   a Fixedpoint value exactly twice the given one, if it can be represented exactly;
+//   otherwise, a Fixedpoint value for which either fixedpoint_is_overflow_pos
+//   or fixedpoint_is_overflow_neg returns true (depending on whether the
+//   computed value would have been positive or negative)
 Fixedpoint fixedpoint_double(Fixedpoint val) {
-  // return fixedpoint_add(val, val);
-
-  // create tracking for carrying and overflow
-  uint64_t carry = 0, overflow = 0;
-
-  // recognize need to carry over if last bit of frac is 1
-  if (val.frac & (1UL << 63)) {
-    carry = 1UL;
-  }
-
-  // recognize that overflow will occur if last bit of whole is 1
-  if (val.whole & (1UL << 63)) {
-    overflow = 1UL;
-  }
-
-  // do bit shifting to double
-  val.frac = val.frac << 1;
-  val.whole = val.whole << 1;
-
-  // add carry to whole;
-  val.whole += carry;
-
-  // set overflow statuses, either positive or neg based on neg status of value doubled
-  if (overflow) {
-    if (fixedpoint_is_neg(val)) val.neg_over = 1;
-    else val.pos_over = 1;
-  }
-
-  // return val
-  return val;
+  return fixedpoint_add(val, val); // add val to itself to double
 }
 
+// Compare two valid Fixedpoint values.
+//
+// Parameters:
+//   left - the left Fixedpoint value
+//   right - the right Fixedpoint value
+//
+// Returns:
+//    -1 if left < right;
+//     0 if left == right;
+//     1 if left > right
 int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
   // if values are equal, return 0
   if ( (left.whole == right.whole) && (left.frac == right.frac) && (left.neg == right.neg)) return 0;
@@ -252,54 +299,145 @@ int fixedpoint_compare(Fixedpoint left, Fixedpoint right) {
   // if left is positive and right is negative, left is greater, return 1
   if (!left.neg) {
     if (right.neg) return 1;
-    // is both values are pos, and |left| > |right|, left is greater, return 1
+    // for both >= 0, left is greater if it has greater whole, or greater frac and equal whole
     if ( (left.whole > right.whole) || ( (left.whole == right.whole) && (left.frac > right.frac) )) return 1;
-    // else, right is greater, return -1
+    // otherwise it is less
     return -1;
   }
 
-  // if right is positive, only option left is that left is negative. right is greater, return -1 
+  // if right is positive, (at this point left must be negative), so right is greater
   if (!right.neg) return -1;
 
-  // both values must be neg to reach this point, if |left| < |right|, left is greater, return 1
+  // both values are negative, left is greater if its whole is less, or whole is equal and frac is less
   if ( (left.whole < right.whole) || ( (left.whole == right.whole) && (left.frac < right.frac) )) return 1;
-  // else return -1
+  // otherwise right is greater
   return -1;
 }
 
+// Determine whether a Fixedpoint value is equal to 0.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is a valid Fixedpoint value equal to 0;
+//   0 is val is not a valid Fixedpoint value equal to 0
 int fixedpoint_is_zero(Fixedpoint val) {
   return (val.whole == 0 && val.frac == 0); // true if val is 0
 }
 
+// Determine whether a Fixedpoint value is an "error" value resulting
+// from a call to fixedpoint_create_from_hex for which the argument
+// string was invalid.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is the result of a call to fixedpoint_create_from_hex with
+//   an invalid argument string;
+//   0 otherwise
 int fixedpoint_is_err(Fixedpoint val) {
   return val.err; // true if error from invalid hex-string
 }
 
+// Determine whether a Fixedpoint value is negative (less than 0).
+//
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is a valid value less than 0;
+//   0 otherwise
 int fixedpoint_is_neg(Fixedpoint val) {
-  return val.neg; // true if val is negative
+  return val.neg && fixedpoint_is_valid(val); // true if val is negative and valid
 }
 
+// Determine whether a Fixedpoint value is the result of negative overflow.
+// Negative overflow results when a sum, difference, or product is negative
+// and has a magnitude that is too large to represent.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is the result of an operation where negative overflow occurred;
+//   0 otherwise
 int fixedpoint_is_overflow_neg(Fixedpoint val) {
-  return val.neg_over; // true if occurence of negative overflow
+  return val.neg_over;
 }
 
+// Determine whether a Fixedpoint value is the result of positive overflow.
+// Positive overflow results when a sum, difference, or product is positive
+// and has a magnitude that is too large to represent.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is the result of an operation where positive overflow occurred;
+//   0 otherwise
 int fixedpoint_is_overflow_pos(Fixedpoint val) {
-  return val.pos_over; // true if occurence of positive overflow
+  return val.pos_over;
 }
 
+// Determine whether a Fixedpoint value is the result of negative underflow.
+// Negative underflow occurs when a division (i.e., fixedpoint_halve)
+// produces a value that is negative, and can't be exactly represented because
+// the fractional part of the representation doesn't have enough bits.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is the result of an operation where negative underflow occurred;
+//   0 otherwise
 int fixedpoint_is_underflow_neg(Fixedpoint val) {
-  return val.neg_under; // true if occurence of negative underflow
+  return val.neg_under;
 }
 
+// Determine whether a Fixedpoint value is the result of positive underflow.
+// Positive underflow occurs when a division (i.e., fixedpoint_halve)
+// produces a value that is positive, and can't be exactly represented because
+// the fractional part of the representation doesn't have enough bits.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val is the result of an operation where positive underflow occurred;
+//   0 otherwise
 int fixedpoint_is_underflow_pos(Fixedpoint val) {
-  return val.pos_under; // true if occurence of positive underflow
+  return val.pos_under;
 }
 
+// Determine whether a Fixedpoint value represents a valid negative or non-negative number.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   1 if val represents a valid negative or non-negative number;
+//   0 otherwise
 int fixedpoint_is_valid(Fixedpoint val) {
   // true if any occurence of any over/underflow or hex-string error
   return !(val.err || val.pos_over || val.neg_over || val.pos_under || val.neg_under);
 }
 
+// Return a dynamically allocated C character string with the representation of
+// the given valid Fixedpoint value.  The string should start with "-" if the
+// value is negative, and should use the characters 0-9 and a-f to represent
+// each hex digit of the whole and fractional parts. As a special case, if the
+// Fixedpoint value represents an integer (i.e., the fractional part is 0),
+// then no "decimal point" ('.') should be included.
+//
+// Parameters:
+//   val - the Fixedpoint value
+//
+// Returns:
+//   dynamically allocated character string containing the representation
+//   of the Fixedpoint value
 char *fixedpoint_format_as_hex(Fixedpoint val) {
   char* hex = calloc(35, 1); // allocate memory for maximum length valid hex-string (16 whole, 16 frac, 1 '.', 1 '-')
   unsigned int index = 0; // initialize variables
@@ -330,6 +468,54 @@ char *fixedpoint_format_as_hex(Fixedpoint val) {
   return hex; // return hex-string
 }
 
+// Return a 64 bit value (computed in decimal) converted from a hexadecimal string
+// Leading 0s in a whole number representation are ignored while trailing 0s are
+// accounted for. The inverse is true for fractionally represented values
+//
+// Parameters:
+//   hex - the hexadecimal string
+//   len - the length of the string
+//   is_whole - the representation of the string (1 - whole, 0 - fraction)
+//   *err - the error state of the string
+//
+// Returns: appropriate decimal value for the inputted hexadecimal string
+uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
+  uint64_t val = 0; // initialize value
+  int i = is_whole ? 0 : 15; // start power at 0 for whole (right to left) and 15 for frac (left to right)
+
+  // if either whole or frac longer than 16, denote error
+  if (len > 16) *err = 1;
+
+  // for each char in string, translate alphanumeric chars (0-9, a-f/A-F) into integer
+  // shift the bits (multiply by powers of 2 in in/decrements of 4)
+  for (int j = 0; j < len; ++j) {
+    if (*hex >= '0' && *hex <= '9') val += (1UL << (4 * i)) * (*hex - '0');
+    else if (*hex >= 'a' && *hex <= 'f') val += (1UL << (4 * i)) * (*hex - 'a' + 10);
+    else if (*hex >= 'A' && *hex <= 'F') val += (1UL << (4 * i)) * (*hex - 'A' + 10);
+
+    // if char is not expected alphanumeric (0-9, a-f/A-F), denote error
+    else *err = 1;
+
+    // if whole, move the pointer forward; if frac, backward - increment or decrement power
+    // (ex:12345, if whole, pointer would start on 5 and frac would start on 1)
+    if (is_whole) { --hex; ++i; }
+    else { ++hex; --i; }
+  }
+
+  // return appropriate value
+  return val;
+}
+
+// Append a hexadecimal string from a 64 bit value (computed in decimal) 
+// to an existing dynamically allocated hexadecimal string
+//
+// Parameters:
+//   val - 64 bit value
+//   hex - dymanically allocated hex string
+//   index - index at which to insert the converted string
+//   whole - the representation of the value (1 - whole, 0 - fraction)
+// 
+// Returns: (void)
 void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole) {
   int hex_int, non_zero = 0; // initialize and declare variables
   char hex_char;
@@ -360,31 +546,4 @@ void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole) {
       (*index)++; // increment index
     }
   }
-}
-
-uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
-  uint64_t val = 0; // initialize value
-  int i = is_whole ? 0 : 15; // start power at 0 for whole (right to left) and 15 for frac (left to right)
-
-  // if either whole or frac longer than 16, denote error
-  if (len > 16) *err = 1;
-
-  // for each char in string, translate alphanumeric chars (0-9, a-f/A-F) into integer
-  // shift the bits (multiply by powers of 2 in in/decrements of 4)
-  for (int j = 0; j < len; ++j) {
-    if (*hex >= '0' && *hex <= '9') val += (1UL << (4 * i)) * (*hex - '0');
-    else if (*hex >= 'a' && *hex <= 'f') val += (1UL << (4 * i)) * (*hex - 'a' + 10);
-    else if (*hex >= 'A' && *hex <= 'F') val += (1UL << (4 * i)) * (*hex - 'A' + 10);
-
-    // if char is not expected alphanumeric (0-9, a-f/A-F), denote error
-    else *err = 1;
-
-    // if whole, move the pointer forward; if frac, backward - increment or decrement power
-    // (ex:12345, if whole, pointer would start on 5 and frac would start on 1)
-    if (is_whole) { --hex; ++i; }
-    else { ++hex; --i; }
-  }
-
-  // return appropriate value
-  return val;
 }
