@@ -296,12 +296,33 @@ void test_sub(TestObjs *objs) {
 
   Fixedpoint lhs, rhs, diff;
 
+  // given test
   lhs = fixedpoint_create_from_hex("-ccf35aa3a04a3b.b105");
   rhs = fixedpoint_create_from_hex("f676e8.58");
   diff = fixedpoint_sub(lhs, rhs);
   ASSERT(fixedpoint_is_neg(diff));
   ASSERT(0xccf35aa496c124UL == fixedpoint_whole_part(diff));
   ASSERT(0x0905000000000000UL == fixedpoint_frac_part(diff));
+
+  // 0 - 0 = 0
+  lhs = fixedpoint_create_from_hex("0.0");
+  rhs = fixedpoint_create_from_hex("0.0");
+  diff = fixedpoint_sub(lhs, rhs);
+  ASSERT(!fixedpoint_is_neg(diff));
+  ASSERT(fixedpoint_is_zero(diff));
+  ASSERT(0 == fixedpoint_whole_part(diff));
+  ASSERT(0 == fixedpoint_frac_part(diff));
+  // positive - negative = negative
+  // positive - negative = positive
+  // positive - negative w/ pos overflow
+  // negative - positive w/ neg overflow
+  // negative - postivie w/ neg overflow caused by carry-over
+  // postive - postivie
+  // negative - negative
+
+
+
+
 }
 
 void test_is_err(TestObjs *objs) {
