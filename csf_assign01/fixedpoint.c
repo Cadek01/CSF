@@ -226,8 +226,6 @@ Fixedpoint fixedpoint_sub(Fixedpoint left, Fixedpoint right) {
 // Returns:
 //   the negation of val
 Fixedpoint fixedpoint_negate(Fixedpoint val) {
-  int temp;
-
   if (fixedpoint_is_zero(val)) return val; // if value is equal to zero, do nothing
   
   // set positive value to negative, negative values to positive
