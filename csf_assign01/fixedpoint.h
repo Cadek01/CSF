@@ -1,10 +1,16 @@
+/*
+ * Fixedpoint function declarations for fixedpoint libary
+ * CSF Assignment 1 MS2
+ * M.Albert and R.Sivananthan
+ * malber20@jhu.edu and rsivana1@jhu.edu
+ */
+
 #ifndef FIXEDPREC_H
 #define FIXEDPREC_H
 
 #include <stdint.h>
 
 typedef struct {
-  // TODO: add fields
   uint64_t whole, frac;
   int neg, err, pos_over, neg_over, pos_under, neg_under;
 } Fixedpoint;
@@ -251,13 +257,29 @@ int fixedpoint_is_valid(Fixedpoint val);
 //   of the Fixedpoint value
 char *fixedpoint_format_as_hex(Fixedpoint val);
 
-// add description
+// Return a 64 bit value (computed in decimal) converted from a hexadecimal string
+// Leading 0s in a whole number representation are ignored while trailing 0s are
+// accounted for. The inverse is true for fractionally represented values
+//
+// Parameters:
+//   hex - the hexadecimal string
+//   len - the length of the string
+//   is_whole - the representation of the string (1 - whole, 0 - fraction)
+//   *err - the error state of the string
+//
+// Returns: appropriate decimal value for the inputted hexadecimal string
 uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err);
 
-// add description 
+// Append a hexadecimal string from a 64 bit value (computed in decimal) 
+// to an existing dynamically allocated hexadecimal string
+//
+// Parameters:
+//   val - 64 bit value
+//   hex - dymanically allocated hex string
+//   index - index at which to insert the converted string
+//   whole - the representation of the value (1 - whole, 0 - fraction)
+// 
+// Returns: (void)
 void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole);
-
-// add description
-uint64_t get_add_val(uint64_t val1, uint64_t val2, uint64_t* carry);
 
 #endif // FIXEDPREC_H

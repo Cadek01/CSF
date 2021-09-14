@@ -1,9 +1,14 @@
+/*
+ * Fixedpoint functions testing for fixedpoint libary
+ * CSF Assignment 1 MS2
+ * M.Albert and R.Sivananthan
+ * malber20@jhu.edu and rsivana1@jhu.edu
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "fixedpoint.h"
 #include "tctest.h"
-
-#include <inttypes.h>
 
 // Test fixture object, has some useful values for testing
 typedef struct {
