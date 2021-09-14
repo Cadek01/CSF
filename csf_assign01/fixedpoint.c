@@ -363,33 +363,28 @@ void dec_to_hex(uint64_t val, char *hex, unsigned int* index, int whole) {
 }
 
 uint64_t hex_to_dec(const char *hex, int len, int is_whole, int* err) {
-  uint64_t val = 0;
-  int i = is_whole ? 0 : 15;
+  uint64_t val = 0; // initialize value
+  int i = is_whole ? 0 : 15; // start power at 0 for whole (right to left) and 15 for frac (left to right)
 
-  // if empty sting was passed to this function, interpret as 0 and mark error
-  if(len == 0) {
-    *err=1;
-    return 0;
-  } 
-
-  // if string is longer than 16, mark error
+  // if either whole or frac longer than 16, denote error
   if (len > 16) *err = 1;
 
-  // for each char in string, translate alphanumeric chars (0-9, a-f/A-F) into bits
+  // for each char in string, translate alphanumeric chars (0-9, a-f/A-F) into integer
+  // shift the bits (multiply by powers of 2 in in/decrements of 4)
   for (int j = 0; j < len; ++j) {
     if (*hex >= '0' && *hex <= '9') val += (1UL << (4 * i)) * (*hex - '0');
     else if (*hex >= 'a' && *hex <= 'f') val += (1UL << (4 * i)) * (*hex - 'a' + 10);
     else if (*hex >= 'A' && *hex <= 'F') val += (1UL << (4 * i)) * (*hex - 'A' + 10);
 
-    // if char is not expected alphanumeric (0-9, a-f/A-F), mark error
+    // if char is not expected alphanumeric (0-9, a-f/A-F), denote error
     else *err = 1;
 
-    // if whole, move the pointer up; if frac, do opposite
+    // if whole, move the pointer forward; if frac, backward - increment or decrement power
     // (ex:12345, if whole, pointer would start on 5 and frac would start on 1)
     if (is_whole) { --hex; ++i; }
     else { ++hex; --i; }
   }
 
-  // return created value
+  // return appropriate value
   return val;
 }
