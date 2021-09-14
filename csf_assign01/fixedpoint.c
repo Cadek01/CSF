@@ -52,7 +52,7 @@ Fixedpoint fixedpoint_create_from_hex(const char *hex) {
   }
 
   // if no period detected, assume the whole hex string represents whole
-  if (!is_frac) whole = hex_to_dec(hex, len_hex, 1, err_ptr);
+  if (!is_frac) whole = hex_to_dec(hex + len_hex - 1, len_hex, 1, err_ptr);
 
   // create fixedpoint, mark neg and err fields by their neg and err field status trackers used in this function
   Fixedpoint fixedpoint = fixedpoint_create2(whole, frac);
