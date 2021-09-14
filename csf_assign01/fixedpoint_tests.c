@@ -36,6 +36,8 @@ void test_negate(TestObjs *objs);
 void test_add(TestObjs *objs);
 void test_sub(TestObjs *objs);
 void test_is_err(TestObjs *objs);
+void test_double(TestObjs *objs);
+void test_halve(TestObjs *objs);
 
 int main(int argc, char **argv) {
   // if a testname was specified on the command line, only that
@@ -54,6 +56,8 @@ int main(int argc, char **argv) {
   TEST(test_add);
   TEST(test_sub);
   TEST(test_is_err);
+  TEST(test_double);
+  TEST(test_halve);
 
   // IMPORTANT: if you add additional test functions (which you should!),
   // make sure they are included here.  E.g., if you add a test function
@@ -412,3 +416,76 @@ void test_is_err(TestObjs *objs) {
   Fixedpoint err7 = fixedpoint_create_from_hex("7.0?4");
   ASSERT(fixedpoint_is_err(err7));
 }
+
+void test_double(TestObjs *objs) {
+  (void) objs;
+
+  Fixedpoint val, doubled_val;
+
+  // test simple doubling
+  ASSERT(fixedpoint_whole_part(fixedpoint_double(objs->one_fourth))
+		 == fixedpoint_whole_part(objs->one_half));
+  ASSERT(fixedpoint_frac_part(fixedpoint_double(objs->one_fourth))
+		 == fixedpoint_frac_part(objs->one_half));
+  
+  // test carrying over
+  ASSERT(fixedpoint_whole_part(fixedpoint_double(objs->one_half))
+		 == fixedpoint_whole_part(objs->one));
+  ASSERT(fixedpoint_frac_part(fixedpoint_double(objs->one_half))
+		 == fixedpoint_frac_part(objs->one)); 
+  
+  // test overflow positive
+  doubled_val = fixedpoint_double(objs->max);
+  ASSERT(fixedpoint_is_overflow_pos(doubled_val));
+  ASSERT(!fixedpoint_is_overflow_neg(doubled_val));
+  
+  // test overflow negative
+  val = fixedpoint_negate(objs->max);
+  doubled_val = fixedpoint_double(val);
+  ASSERT(!fixedpoint_is_overflow_pos(doubled_val));
+  ASSERT(fixedpoint_is_overflow_neg(doubled_val));
+  
+  // test overflow because of carrying over
+  val = fixedpoint_create_from_hex("ffffffffffffffff.8");
+  doubled_val = fixedpoint_double(val); 
+  ASSERT(fixedpoint_is_overflow_pos(doubled_val));
+  ASSERT(!fixedpoint_is_overflow_neg(doubled_val));
+
+}
+
+void test_halve(TestObjs *objs) {
+  (void) objs;
+
+  Fixedpoint val, halved_val;
+
+  // test simple halving
+  ASSERT(fixedpoint_whole_part(fixedpoint_halve(objs->one_half)) ==
+		  fixedpoint_whole_part(objs->one_fourth));
+  ASSERT(fixedpoint_frac_part(fixedpoint_halve(objs->one_half)) ==
+		  fixedpoint_frac_part(objs->one_fourth));
+  
+  // test 'carrying under' 
+  ASSERT(fixedpoint_whole_part(fixedpoint_halve(objs->one)) ==
+		  fixedpoint_whole_part(objs->one_half));
+  ASSERT(fixedpoint_frac_part(fixedpoint_halve(objs->one)) ==
+		fixedpoint_frac_part(objs->one_half));
+  
+  // test underflow positive
+  val = fixedpoint_create_from_hex("0.0000000000000001");
+  halved_val = fixedpoint_halve(val);
+  ASSERT(fixedpoint_is_underflow_pos(halved_val));
+  ASSERT(!fixedpoint_is_underflow_neg(halved_val));
+  
+  // test underflow negative
+  val = fixedpoint_negate(fixedpoint_create_from_hex("0.0000000000000001"));
+  halved_val = fixedpoint_halve(val);
+  ASSERT(!fixedpoint_is_underflow_pos(halved_val));
+  ASSERT(fixedpoint_is_underflow_neg(halved_val));
+  
+  // test underflow because of carrying over
+  val = fixedpoint_create_from_hex("1.ffffffffffffffff");
+  halved_val = fixedpoint_halve(val);
+  ASSERT(fixedpoint_is_underflow_pos(halved_val));
+  ASSERT(!fixedpoint_is_underflow_neg(halved_val));
+}
+
