@@ -39,6 +39,7 @@ void test_is_err(TestObjs *objs);
 
 void test_double(TestObjs *objs);
 void test_halve(TestObjs *objs);
+void test_compare(TestObjs *objs);
 
 int main(int argc, char **argv) {
   // if a testname was specified on the command line, only that
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
 
   TEST(test_double);
   TEST(test_halve);
+  TEST(test_compare);
 
   TEST_FINI();
 }
@@ -103,6 +105,7 @@ void test_frac_part(TestObjs *objs) {
 void test_create_from_hex(TestObjs *objs) {
   (void) objs;
 
+  // lots of tests because we spent awhile on create_from_hex secret test 4
   // given test
   Fixedpoint val1 = fixedpoint_create_from_hex("f6a5865.00f2");
   ASSERT(fixedpoint_is_valid(val1));
@@ -375,22 +378,22 @@ void test_sub(TestObjs *objs) {
   lhs = fixedpoint_create_from_hex("ce8ae.2b7");
   rhs = fixedpoint_create_from_hex("c7ad8.7a730");
   diff = fixedpoint_sub(lhs, rhs);
-  ASSERT(0x6DD5 == fixedpoint_whole_part(diff));
-  ASSERT(0XB0FD000000000000 == fixedpoint_frac_part(diff));
+  ASSERT(0x6DD5UL == fixedpoint_whole_part(diff));
+  ASSERT(0XB0FD000000000000UL == fixedpoint_frac_part(diff));
   
   // positive - negative
   lhs = fixedpoint_create_from_hex("65.9b85a0a14fc6");
   rhs = fixedpoint_create_from_hex("-ab34f892357ec2.2419b3");
   diff = fixedpoint_sub(lhs, rhs);
-  ASSERT(0xAB34F892357F27 == fixedpoint_whole_part(diff));
-  ASSERT(0xBF9F53A14FC60000 == fixedpoint_frac_part(diff));
+  ASSERT(0xAB34F892357F27UL == fixedpoint_whole_part(diff));
+  ASSERT(0xBF9F53A14FC60000UL == fixedpoint_frac_part(diff));
 
   // positive - negative
   lhs = fixedpoint_create_from_hex("8.74e77ff82d1ea3e");
   rhs = fixedpoint_create_from_hex("87be5.e22");
   diff = fixedpoint_sub(lhs, rhs);
-  ASSERT(0x87BDD == fixedpoint_whole_part(diff));
-  ASSERT(0x6D388007D2E15C20 == fixedpoint_frac_part(diff));
+  ASSERT(0x87BDDUL == fixedpoint_whole_part(diff));
+  ASSERT(0x6D388007D2E15C20UL == fixedpoint_frac_part(diff));
 
   // positive - negative w/ overflow
   lhs = fixedpoint_create_from_hex("ffffffffffffffff");
@@ -411,8 +414,8 @@ void test_sub(TestObjs *objs) {
   rhs = fixedpoint_create_from_hex("78fac8.20b2c76");
   diff = fixedpoint_sub(lhs, rhs);
   ASSERT(fixedpoint_is_neg(diff));
-  ASSERT(0x587EDDF56C4 == fixedpoint_whole_part(diff));
-  ASSERT(0x7DAEAAD000000000 == fixedpoint_frac_part(diff));
+  ASSERT(0x587EDDF56C4UL == fixedpoint_whole_part(diff));
+  ASSERT(0x7DAEAAD000000000UL == fixedpoint_frac_part(diff));
   
   // negative - positive w/ overflow
   lhs = fixedpoint_create_from_hex("-0000000000000001");
@@ -428,8 +431,13 @@ void test_sub(TestObjs *objs) {
   ASSERT(fixedpoint_is_overflow_neg(diff));
   ASSERT(!fixedpoint_is_overflow_pos(diff));
   
-  // negative - negative
-  
+  // positve - positive: good example of borrow for frac
+  lhs = fixedpoint_create_from_hex("e1bc.0000a");
+  rhs = fixedpoint_create_from_hex("c.bf5");
+  diff = fixedpoint_sub(lhs, rhs);
+  ASSERT(!fixedpoint_is_neg(diff));
+  ASSERT(0xe1afUL == fixedpoint_whole_part(diff));
+  ASSERT(0x40b0a00000000000UL == fixedpoint_frac_part(diff)); 
 }
 
 void test_is_err(TestObjs *objs) {
@@ -519,10 +527,47 @@ void test_halve(TestObjs *objs) {
   ASSERT(!fixedpoint_is_underflow_neg(halved_val));
   
   // test underflow negative
-  val = fixedpoint_negate(fixedpoint_create_from_hex("0.0000000000000001"));
+  val = fixedpoint_create_from_hex("-0.0000000000000001");
   halved_val = fixedpoint_halve(val);
   ASSERT(!fixedpoint_is_underflow_pos(halved_val));
   ASSERT(fixedpoint_is_underflow_neg(halved_val));
-  
+}
+
+void test_compare(TestObjs *objs) {
+  // left > right
+  int result = fixedpoint_compare(objs->large1, objs->one);
+  ASSERT(result == 1);
+
+  // left < right
+  result = fixedpoint_compare(objs->one, objs->large1);
+  ASSERT(result == -1);
+
+  // left == right
+  result = fixedpoint_compare(objs->large1, objs->large1);
+  ASSERT(result == 0);
+
+  // left = right with fractions
+  result = fixedpoint_compare(objs->one_half, objs->one_half);
+  ASSERT(result == 0);
+
+  // - < + with smaller magnitude
+  result = fixedpoint_compare(fixedpoint_create_from_hex("-1"), objs->one_half);
+  ASSERT(result == -1);
+
+  // left > right but right.frac > left.frac
+  result = fixedpoint_compare(objs->one, objs->one_fourth);
+  ASSERT(result == 1);
+
+  // left frac < right frac
+  result = fixedpoint_compare(objs->one_fourth, objs->one_half);
+  ASSERT(result == -1);
+
+  // 0 > -
+  result = fixedpoint_compare(objs->zero, fixedpoint_create_from_hex("-1"));
+  ASSERT(result == 1);
+
+  // 1 > -1 (same magnitude)
+  result = fixedpoint_compare(objs->one, fixedpoint_create_from_hex("-1"));
+  ASSERT(result == 1);
 }
 
