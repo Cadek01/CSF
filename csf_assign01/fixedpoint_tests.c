@@ -372,25 +372,25 @@ void test_sub(TestObjs *objs) {
   ASSERT(0UL == fixedpoint_frac_part(diff));
 
   // positive - positive
-  lhs = fixedpoint_create_from_hex("ce8ae18e7c305e.2b7");
+  lhs = fixedpoint_create_from_hex("ce8ae.2b7");
   rhs = fixedpoint_create_from_hex("c7ad8.7a730");
   diff = fixedpoint_sub(lhs, rhs);
-  ASSERT(0xCE8AE18E6FB585UL == fixedpoint_whole_part(diff));
-  //ASSERT(0xB0FD0UL == fixedpoint_frac_part(diff));
+  ASSERT(0x6DD5 == fixedpoint_whole_part(diff));
+  ASSERT(0XB0FD000000000000 == fixedpoint_frac_part(diff));
   
   // positive - negative
   lhs = fixedpoint_create_from_hex("65.9b85a0a14fc6");
   rhs = fixedpoint_create_from_hex("-ab34f892357ec2.2419b3");
   diff = fixedpoint_sub(lhs, rhs);
   ASSERT(0xAB34F892357F27 == fixedpoint_whole_part(diff));
-  //ASSERT(0xBF9F53A14FC6 == fixedpoint_frac_part(diff));
+  ASSERT(0xBF9F53A14FC60000 == fixedpoint_frac_part(diff));
 
   // positive - negative
   lhs = fixedpoint_create_from_hex("8.74e77ff82d1ea3e");
   rhs = fixedpoint_create_from_hex("87be5.e22");
   diff = fixedpoint_sub(lhs, rhs);
   ASSERT(0x87BDD == fixedpoint_whole_part(diff));
-  // ASSERT(0x6D388007D2E15C2 == fixedpoint_frac_part(diff));
+  ASSERT(0x6D388007D2E15C20 == fixedpoint_frac_part(diff));
 
   // positive - negative w/ overflow
   lhs = fixedpoint_create_from_hex("ffffffffffffffff");
@@ -399,7 +399,7 @@ void test_sub(TestObjs *objs) {
   ASSERT(fixedpoint_is_overflow_pos(diff));
   ASSERT(!fixedpoint_is_overflow_neg(diff));
 
-  // positive - negative w/ pos overflow caused by carry-over
+  // positive - negative w/ pos overflow because of carrying-over
   lhs = fixedpoint_create_from_hex("ffffffffffffffff.f");
   rhs = fixedpoint_create_from_hex("-0000000000000000.1");
   diff = fixedpoint_sub(lhs, rhs);
@@ -412,7 +412,7 @@ void test_sub(TestObjs *objs) {
   diff = fixedpoint_sub(lhs, rhs);
   ASSERT(fixedpoint_is_neg(diff));
   ASSERT(0x587EDDF56C4 == fixedpoint_whole_part(diff));
-  //ASSERT(0x7DAEAAD == fixedpoint_whole_part(diff));
+  ASSERT(0x7DAEAAD000000000 == fixedpoint_frac_part(diff));
   
   // negative - positive w/ overflow
   lhs = fixedpoint_create_from_hex("-0000000000000001");
@@ -421,7 +421,7 @@ void test_sub(TestObjs *objs) {
   ASSERT(!fixedpoint_is_overflow_pos(diff));
   ASSERT(fixedpoint_is_overflow_neg(diff));
 
-  // negative - positive w/ neg overflow caused by carry-over
+  // negative - positive w/ neg overflow because of carrying-over
   lhs = fixedpoint_create_from_hex("-ffffffffffffffff.f");
   rhs = fixedpoint_create_from_hex("0000000000000000.1");
   diff = fixedpoint_sub(lhs, rhs);
@@ -493,12 +493,6 @@ void test_double(TestObjs *objs) {
   ASSERT(!fixedpoint_is_overflow_pos(doubled_val));
   ASSERT(fixedpoint_is_overflow_neg(doubled_val));
   
-  // test overflow because of carrying over
-  val = fixedpoint_create_from_hex("ffffffffffffffff.8");
-  doubled_val = fixedpoint_double(val); 
-  ASSERT(fixedpoint_is_overflow_pos(doubled_val));
-  ASSERT(!fixedpoint_is_overflow_neg(doubled_val));
-
 }
 
 void test_halve(TestObjs *objs) {
@@ -530,10 +524,5 @@ void test_halve(TestObjs *objs) {
   ASSERT(!fixedpoint_is_underflow_pos(halved_val));
   ASSERT(fixedpoint_is_underflow_neg(halved_val));
   
-  // test underflow because of carrying over
-  val = fixedpoint_create_from_hex("1.ffffffffffffffff");
-  halved_val = fixedpoint_halve(val);
-  ASSERT(fixedpoint_is_underflow_pos(halved_val));
-  ASSERT(!fixedpoint_is_underflow_neg(halved_val));
 }
 
